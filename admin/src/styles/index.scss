@@ -1,0 +1,43 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c0c4cc;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f4f4f5;
+}
+
+/* 全局覆盖 Element Plus 表格溢出提示框样式 */
+.el-popper.is-dark {
+  max-width: 360px !important;
+  line-height: 1.6 !important;
+  font-size: 13px !important;
+  padding: 10px 14px !important;
+  background: rgba(58, 46, 36, 0.92) !important;
+  border: 1px solid rgba(201, 168, 76, 0.2) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+  word-break: break-word !important;
+  white-space: normal !important;
+
+  .el-popper__arrow::before {
+    background: rgba(58, 46, 36, 0.92) !important;
+    border-color: rgba(201, 168, 76, 0.2) !important;
+  }
+}

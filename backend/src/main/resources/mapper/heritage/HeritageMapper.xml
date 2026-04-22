@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.feiyi.module.heritage.dao.HeritageDao">
+
+    <!-- 分页查询非遗项目列表 -->
+    <select id="listByPage" resultType="com.feiyi.module.heritage.domain.HeritageVO">
+        SELECT
+            h.id,
+            h.name,
+            h.category_id AS categoryId,
+            c.name AS categoryName,
+            h.level,
+            h.region,
+            h.declare_year AS declareYear,
+            h.inheritor,
+            h.description,
+            h.cover_image AS coverImage,
+            h.view_count AS viewCount,
+            (SELECT COUNT(*) FROM t_favorite f WHERE f.heritage_id = h.id) AS favoriteCount,
+            h.create_time AS createTime
+        FROM t_heritage h
+        LEFT JOIN t_heritage_category c ON h.category_id = c.id
+        WHERE h.deleted_flag = 0
+        <if test="query.keyword != null and query.keyword != ''">
+            AND (h.name LIKE CONCAT('%', #{query.keyword}, '%')
+                 OR h.description LIKE CONCAT('%', #{query.keyword}, '%'))
+        </if>
+        <if test="query.categoryId != null">
+            AND h.category_id = #{query.categoryId}
+        </if>
+        <if test="query.level != null and query.level != ''">
+            AND h.level = #{query.level}
+        </if>
+        <if test="query.region != null and query.region != ''">
+            AND h.region LIKE CONCAT('%', #{query.region}, '%')
+        </if>
+        ORDER BY h.sort ASC, h.create_time DESC
+    </select>
+
+    <!-- 根据ID获取非遗项目详情 -->
+    <select id="getDetailById" resultType="com.feiyi.module.heritage.domain.HeritageVO">
+        SELECT
+            h.id,
+            h.name,
+            h.category_id AS categoryId,
+            c.name AS categoryName,
+            h.level,
+            h.region,
+            h.declare_year AS declareYear,
+            h.inheritor,
+            h.description,
+            h.content,
+            h.history,
+            h.feature,
+            h.cover_image AS coverImage,
+            h.view_count AS viewCount,
+            (SELECT COUNT(*) FROM t_favorite f WHERE f.heritage_id = h.id) AS favoriteCount,
+            (SELECT COUNT(*) > 0 FROM t_exhibit e WHERE e.heritage_id = h.id AND e.deleted_flag = 0) AS hasExhibit,
+            h.create_time AS createTime
+        FROM t_heritage h
+        LEFT JOIN t_heritage_category c ON h.category_id = c.id
+        WHERE h.id = #{id} AND h.deleted_flag = 0
+    </select>
+
+    <!-- 增加浏览次数 -->
+    <update id="incrementViewCount">
+        UPDATE t_heritage SET view_count = view_count + 1 WHERE id = #{id}
+    </update>
+
+</mapper>

@@ -1,0 +1,61 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # Docker 环境中 MySQL 服务名为 mysql
+    url: jdbc:mysql://mysql:3306/feiyi_3d?useUnicode=true&characterEncoding=utf8mb4&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: AAbb1234!
+    druid:
+      initial-size: 5
+      min-idle: 5
+      max-active: 20
+      max-wait: 60000
+
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.feiyi.module.*.domain
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deletedFlag
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
+# MinIO 配置（Docker 内部用服务名 minio:9000）
+minio:
+  endpoint: http://minio:9000
+  access-key: root
+  secret-key: "12345678"
+  bucket: feiyi
+  # 前端访问文件的外部地址（通过 Nginx /minio/ 代理）
+  external-url: http://115.191.15.152/minio
+
+# AI 知识助手配置
+ai:
+  api-url: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
+  api-key: sk-20d5e9cea1e540c1983d99a7a05b3f41
+  model: qwen-turbo
+  # Docker 内部 RAG 服务名为 rag
+  rag-url: http://rag:8100

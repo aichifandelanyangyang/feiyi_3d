@@ -1,0 +1,124 @@
+services:
+
+  # ===== MySQL 数据库 =====
+  mysql:
+    image: mysql:8.0
+    container_name: feiyi-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: AAbb1234!
+      MYSQL_DATABASE: feiyi_3d
+      TZ: Asia/Shanghai
+      # 强制设置字符集，防止乱码
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # 收藏、社区等业务表（新库初始化时自动创建）
+      - ./backend/sql/t_favorite.sql:/docker-entrypoint-initdb.d/yy-favorite.sql:ro
+      - ./backend/sql/t_community_post.sql:/docker-entrypoint-initdb.d/yy-community-post.sql:ro
+      # 按文件名排序在 init.sql 之后执行，创建 AI 知识库表
+      - ./backend/sql/t_knowledge.sql:/docker-entrypoint-initdb.d/zz-knowledge.sql:ro
+    ports:
+      - "127.0.0.1:3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ===== MinIO 对象存储 =====
+  minio:
+    image: minio/minio:latest
+    container_name: feiyi-minio
+    restart: always
+    environment:
+      MINIO_ROOT_USER: root
+      MINIO_ROOT_PASSWORD: "12345678"
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9001:9001"   # 管理控制台（对外暴露）
+    expose:
+      - "9000"        # API端口（仅内网）
+    command: server /data --console-address ":9001" --address ":9000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===== Java 后端 =====
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: feiyi-backend
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+    depends_on:
+      mysql:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    expose:
+      - "8080"        # 仅内网，通过前端Nginx代理访问
+
+  # ===== RAG 向量检索服务 =====
+  rag:
+    build:
+      context: ./rag-service
+      dockerfile: Dockerfile
+    container_name: feiyi-rag
+    restart: always
+    environment:
+      RAG_MYSQL_HOST: mysql
+      RAG_MYSQL_PORT: "3306"
+      RAG_MYSQL_USER: root
+      RAG_MYSQL_PASSWORD: AAbb1234!
+      RAG_MYSQL_DB: feiyi_3d
+      TZ: Asia/Shanghai
+    volumes:
+      - rag_chroma:/app/chroma_data
+    depends_on:
+      mysql:
+        condition: service_healthy
+    expose:
+      - "8100"
+
+  # ===== 用户前端 =====
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: feiyi-frontend
+    restart: always
+    ports:
+      - "80:80"       # 对外暴露 80 端口
+    volumes:
+      # 3D模型等大文件不要打进镜像：放到宿主机目录后只读挂载
+      - ./models:/usr/share/nginx/html/models:ro
+    depends_on:
+      - backend
+
+  # ===== 管理后台 =====
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: feiyi-admin
+    restart: always
+    ports:
+      - "81:80"       # 对外暴露 81 端口
+    volumes:
+      - ./models:/usr/share/nginx/html/models:ro
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
+  minio_data:
+  rag_chroma:

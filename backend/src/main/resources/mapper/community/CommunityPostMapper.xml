@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.feiyi.module.community.dao.CommunityPostDao">
+
+    <select id="listByPage" resultType="com.feiyi.module.community.domain.CommunityPostVO">
+        SELECT
+            p.id,
+            p.user_id,
+            u.username,
+            u.avatar,
+            p.title,
+            p.content,
+            p.images,
+            p.status,
+            p.reject_reason,
+            p.view_count,
+            p.like_count,
+            p.create_time
+        FROM t_community_post p
+        LEFT JOIN t_user u ON p.user_id = u.id
+        WHERE p.deleted_flag = 0
+        <if test="query.keyword != null and query.keyword != ''">
+            AND (p.title LIKE CONCAT('%', #{query.keyword}, '%')
+                 OR p.content LIKE CONCAT('%', #{query.keyword}, '%'))
+        </if>
+        <if test="query.status != null">
+            AND p.status = #{query.status}
+        </if>
+        <if test="query.userId != null">
+            AND p.user_id = #{query.userId}
+        </if>
+        ORDER BY p.create_time DESC
+    </select>
+
+    <select id="getDetailById" resultType="com.feiyi.module.community.domain.CommunityPostVO">
+        SELECT
+            p.id,
+            p.user_id,
+            u.username,
+            u.avatar,
+            p.title,
+            p.content,
+            p.images,
+            p.status,
+            p.reject_reason,
+            p.view_count,
+            p.like_count,
+            p.create_time
+        FROM t_community_post p
+        LEFT JOIN t_user u ON p.user_id = u.id
+        WHERE p.id = #{id} AND p.deleted_flag = 0
+    </select>
+
+</mapper>
