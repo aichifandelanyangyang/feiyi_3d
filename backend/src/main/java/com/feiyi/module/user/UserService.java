@@ -202,18 +202,37 @@ public class UserService {
      * 新增用户
      */
     public ResponseDTO<Long> add(UserAddDTO addDTO) {
-        // 检查用户名是否存在
-        LambdaQueryWrapper<UserEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(UserEntity::getUsername, addDTO.getUsername())
-               .eq(UserEntity::getDeletedFlag, 0);
-        if (userDao.selectCount(wrapper) > 0) {
+        // 使用原生SQL查询用户名是否存在（绕过逻辑删除，因为数据库有唯一键约束）
+        UserEntity existingUser = userDao.selectByUsernameIgnoreDeleted(addDTO.getUsername());
+
+        if (existingUser != null) {
+            // 如果用户已删除，恢复用户
+            if (existingUser.getDeletedFlag() != null && existingUser.getDeletedFlag() == 1) {
+                existingUser.setRealName(addDTO.getRealName());
+                existingUser.setPhone(addDTO.getPhone());
+                existingUser.setEmail(addDTO.getEmail());
+                existingUser.setAvatar(addDTO.getAvatar());
+                existingUser.setRoleType(addDTO.getRoleType());
+                existingUser.setPassword(PasswordUtil.encode(addDTO.getPassword()));
+                existingUser.setStatus(1);
+                existingUser.setDeletedFlag(0);
+                userDao.updateById(existingUser);
+                return ResponseDTO.succ(existingUser.getId());
+            }
             return ResponseDTO.error("用户名已存在");
         }
 
+        // 用户名不存在，创建新用户
         UserEntity user = new UserEntity();
-        BeanUtil.copyProperties(addDTO, user);
+        user.setUsername(addDTO.getUsername());
         user.setPassword(PasswordUtil.encode(addDTO.getPassword()));
+        user.setRealName(addDTO.getRealName());
+        user.setPhone(addDTO.getPhone());
+        user.setEmail(addDTO.getEmail());
+        user.setAvatar(addDTO.getAvatar());
+        user.setRoleType(addDTO.getRoleType());
         user.setStatus(1);
+        user.setDeletedFlag(0);
         userDao.insert(user);
 
         return ResponseDTO.succ(user.getId());

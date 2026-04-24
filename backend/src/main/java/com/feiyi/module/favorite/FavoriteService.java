@@ -8,6 +8,7 @@ import com.feiyi.common.util.JwtUtil;
 import com.feiyi.module.favorite.dao.FavoriteDao;
 import com.feiyi.module.favorite.domain.FavoriteEntity;
 import com.feiyi.module.favorite.domain.FavoriteVO;
+import com.feiyi.module.heritage.dao.HeritageDao;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 public class FavoriteService {
 
     private final FavoriteDao favoriteDao;
+    private final HeritageDao heritageDao;
     private final JwtUtil jwtUtil;
 
     private Long getUserId(String authHeader) {
@@ -50,6 +52,9 @@ public class FavoriteService {
         entity.setUserId(userId);
         entity.setHeritageId(heritageId);
         favoriteDao.insert(entity);
+
+        // 更新收藏数
+        heritageDao.incrementFavoriteCount(heritageId);
         return ResponseDTO.succ(true);
     }
 
@@ -63,7 +68,12 @@ public class FavoriteService {
         LambdaQueryWrapper<FavoriteEntity> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(FavoriteEntity::getUserId, userId)
                .eq(FavoriteEntity::getHeritageId, heritageId);
-        favoriteDao.delete(wrapper);
+        int deleted = favoriteDao.delete(wrapper);
+
+        // 更新收藏数（仅在成功删除时）
+        if (deleted > 0) {
+            heritageDao.decrementFavoriteCount(heritageId);
+        }
         return ResponseDTO.succ(true);
     }
 

@@ -31,17 +31,17 @@ DROP TABLE IF EXISTS t_heritage;
 CREATE TABLE t_heritage (
     id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     name VARCHAR(200) NOT NULL COMMENT '项目名称',
-    category_id BIGINT(20) UNSIGNED DEFAULT NULL COMMENT '分类ID',
-    level VARCHAR(50) DEFAULT NULL COMMENT '级别：国家级、省级、市级、县级',
-    region VARCHAR(200) DEFAULT NULL COMMENT '所属地区',
-    declare_year VARCHAR(20) DEFAULT NULL COMMENT '申报年份',
+    category_id BIGINT(20) UNSIGNED DEFAULT NULL COMMENT '项目分类ID',
+    level VARCHAR(50) DEFAULT NULL COMMENT '遗产级别：国家级、省级、市级、县级',
+    region VARCHAR(200) DEFAULT NULL COMMENT '申报地区',
+    protection_unit VARCHAR(200) DEFAULT NULL COMMENT '保护单位',
+    publish_time VARCHAR(50) DEFAULT NULL COMMENT '公布时间',
     inheritor VARCHAR(500) DEFAULT NULL COMMENT '传承人',
-    description TEXT DEFAULT NULL COMMENT '简介',
-    content LONGTEXT DEFAULT NULL COMMENT '详细内容',
+    description TEXT DEFAULT NULL COMMENT '项目简介',
     history TEXT DEFAULT NULL COMMENT '历史渊源',
-    feature TEXT DEFAULT NULL COMMENT '工艺特点',
     cover_image VARCHAR(500) DEFAULT NULL COMMENT '封面图片',
-    view_count INT(11) DEFAULT 0 COMMENT '浏览次数',
+    view_count INT(11) DEFAULT 0 COMMENT '浏览量',
+    favorite_count INT(11) DEFAULT 0 COMMENT '收藏数',
     sort INT(11) DEFAULT 0 COMMENT '排序',
     deleted_flag TINYINT(1) DEFAULT 0 COMMENT '删除标记 0未删除 1已删除',
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -192,13 +192,13 @@ INSERT INTO t_heritage_category (name, description) VALUES
 ('民俗', '民俗类非物质文化遗产');
 
 -- 插入非遗项目示例数据
-INSERT INTO t_heritage (name, category_id, level, region, declare_year, inheritor, description, history, feature, view_count, sort) VALUES
-('景德镇手工制瓷技艺', 1, '国家级', '江西省景德镇市', '2006年', '王锡良、秦锡麟等', '景德镇手工制瓷技艺是中国传统陶瓷文化的杰出代表，具有悠久的历史和独特的艺术价值。', '景德镇制瓷始于汉代，兴于唐宋，盛于明清。', '以"白如玉、明如镜、薄如纸、声如磬"著称于世。', 1234, 1),
-('苏州刺绣', 2, '国家级', '江苏省苏州市', '2006年', '姚建萍等', '苏绣是中国四大名绣之一，以针法精细、色彩雅致著称。', '苏绣起源于三国时期，发展于宋代。', '具有"平、齐、细、密、和、光、顺、匀"的特点。', 2345, 2),
-('昆曲', 5, '国家级', '江苏省昆山市', '2001年', '蔡正仁、张继青等', '昆曲是中国最古老的戏曲剧种之一，被誉为"百戏之祖"。', '昆曲起源于元末明初的昆山腔。', '唱腔婉转细腻，表演优雅精致。', 3456, 3),
-('中国剪纸', 2, '国家级', '全国', '2009年', '多位传承人', '剪纸是中国最普及的民间传统装饰艺术之一，有着悠久的历史。', '剪纸艺术起源于汉代，至今已有两千多年历史。', '以剪刀或刻刀在纸上剪刻花纹，用于装点生活。', 4567, 4),
-('古琴艺术', 3, '国家级', '全国', '2003年', '龚一、李祥霆等', '古琴是中国最古老的弹拨乐器之一，具有三千年以上的历史。', '古琴相传为伏羲所创，是中国文人的必修乐器。', '音色深沉，余音悠远，具有深厚的文化内涵。', 2234, 5),
-('龙舞', 4, '国家级', '全国', '2006年', '多位传承人', '龙舞是中国传统民间舞蹈，以舞龙表演祈求风调雨顺。', '龙舞起源于汉代祭祀活动。', '表演形式多样，有布龙、草龙、火龙等。', 1890, 6);
+INSERT INTO t_heritage (name, category_id, level, region, protection_unit, publish_time, description, history, view_count, favorite_count, sort) VALUES
+('景德镇手工制瓷技艺', 1, '国家级', '江西省景德镇市', '景德镇陶瓷文化遗产保护中心', '2006年', '景德镇手工制瓷技艺是中国传统陶瓷文化的杰出代表，具有悠久的历史和独特的艺术价值。', '景德镇制瓷始于汉代，兴于唐宋，盛于明清。', 1234, 56, 1),
+('苏州刺绣', 2, '国家级', '江苏省苏州市', '苏州刺绣研究所', '2006年', '苏绣是中国四大名绣之一，以针法精细、色彩雅致著称。', '苏绣起源于三国时期，发展于宋代。', 2345, 89, 2),
+('昆曲', 5, '国家级', '江苏省昆山市', '昆曲博物馆', '2001年', '昆曲是中国最古老的戏曲剧种之一，被誉为"百戏之祖"。', '昆曲起源于元末明初的昆山腔。', 3456, 112, 3),
+('中国剪纸', 2, '国家级', '全国', '中国剪纸艺术保护中心', '2009年', '剪纸是中国最普及的民间传统装饰艺术之一，有着悠久的历史。', '剪纸艺术起源于汉代，至今已有两千多年历史。', 4567, 78, 4),
+('古琴艺术', 3, '国家级', '全国', '中国古琴保护协会', '2003年', '古琴是中国最古老的弹拨乐器之一，具有三千年以上的历史。', '古琴相传为伏羲所创，是中国文人的必修乐器。', 2234, 45, 5),
+('龙舞', 4, '国家级', '全国', '中国龙舞保护中心', '2006年', '龙舞是中国传统民间舞蹈，以舞龙表演祈求风调雨顺。', '龙舞起源于汉代祭祀活动。', 1890, 32, 6);
 
 -- 插入展厅数据
 INSERT INTO t_exhibition (name, description, model_path, status) VALUES

@@ -40,4 +40,20 @@ public interface HeritageDao extends BaseMapper<HeritageEntity> {
      * @return 影响行数
      */
     int incrementViewCount(@Param("id") Long id);
+
+    /**
+     * 增加收藏数
+     *
+     * @param id 项目ID
+     * @return 影响行数
+     */
+    int incrementFavoriteCount(@Param("id") Long id);
+
+    /**
+     * 减少收藏数
+     *
+     * @param id 项目ID
+     * @return 影响行数
+     */
+    int decrementFavoriteCount(@Param("id") Long id);
 }

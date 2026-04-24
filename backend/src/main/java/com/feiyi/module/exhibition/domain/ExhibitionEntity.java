@@ -1,5 +1,6 @@
 package com.feiyi.module.exhibition.domain;
 
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.feiyi.common.domain.BaseEntity;
 import lombok.Data;
@@ -48,5 +49,6 @@ public class ExhibitionEntity extends BaseEntity {
     /**
      * 删除标记 0未删除 1已删除
      */
+    @TableLogic(value = "0", delval = "1")
     private Integer deletedFlag;
 }

@@ -67,9 +67,9 @@ knife4j:
 
 # MinIO 对象存储配置
 minio:
-  endpoint: http://127.0.0.1:9090
-  access-key: root
-  secret-key: 12345678
+  endpoint: http://115.191.15.152:9000
+  access-key: minioadmin
+  secret-key: minioadmin
   bucket: feiyi
 
 # AI知识助手配置 (OpenAI兼容格式，支持DeepSeek/智谱/通义千问等)

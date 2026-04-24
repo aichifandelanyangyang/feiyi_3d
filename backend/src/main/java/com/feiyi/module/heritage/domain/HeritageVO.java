@@ -45,16 +45,22 @@ public class HeritageVO {
     private String level;
 
     /**
-     * 所属地区
+     * 所属地区（申报地区）
      */
-    @Schema(description = "所属地区")
+    @Schema(description = "申报地区")
     private String region;
 
     /**
-     * 申报年份
+     * 保护单位
      */
-    @Schema(description = "申报年份")
-    private String declareYear;
+    @Schema(description = "保护单位")
+    private String protectionUnit;
+
+    /**
+     * 公布时间
+     */
+    @Schema(description = "公布时间")
+    private String publishTime;
 
     /**
      * 传承人
@@ -65,14 +71,8 @@ public class HeritageVO {
     /**
      * 简介
      */
-    @Schema(description = "简介")
+    @Schema(description = "项目简介")
     private String description;
-
-    /**
-     * 详细内容
-     */
-    @Schema(description = "详细内容")
-    private String content;
 
     /**
      * 历史渊源
@@ -81,21 +81,15 @@ public class HeritageVO {
     private String history;
 
     /**
-     * 工艺特点
-     */
-    @Schema(description = "工艺特点")
-    private String feature;
-
-    /**
      * 封面图片
      */
     @Schema(description = "封面图片")
     private String coverImage;
 
     /**
-     * 浏览次数
+     * 浏览次数（浏览量）
      */
-    @Schema(description = "浏览次数")
+    @Schema(description = "浏览量")
     private Integer viewCount;
 
     /**

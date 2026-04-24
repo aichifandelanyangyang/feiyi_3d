@@ -128,6 +128,10 @@
                     <el-icon><View /></el-icon>
                     <span>{{ item.viewCount || 0 }}</span>
                   </span>
+                  <span class="stat-item">
+                    <el-icon><Star /></el-icon>
+                    <span>{{ item.favoriteCount || 0 }}</span>
+                  </span>
                 </div>
               </div>
             </div>
@@ -140,7 +144,7 @@
             v-model:current-page="pageNum"
             v-model:page-size="pageSize"
             :total="total"
-            :page-sizes="[12, 24, 36]"
+            :page-sizes="[8, 16, 24]"
             layout="total, prev, pager, next"
             @size-change="handleSizeChange"
             @current-change="handlePageChange"
@@ -155,7 +159,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, Location, View } from '@element-plus/icons-vue'
+import { Search, Location, View, Star } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getHeritageList, getCategoryList } from '@/api/heritage'
 import { useUserStore } from '@/store'
@@ -181,7 +185,7 @@ const searchKeyword = ref('')
 const selectedCategory = ref('')
 // 分页参数
 const pageNum = ref(1)
-const pageSize = ref(12)
+const pageSize = ref(8)
 const total = ref(0)
 
 // 分类列表

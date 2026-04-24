@@ -40,6 +40,7 @@ services:
     volumes:
       - minio_data:/data
     ports:
+      - "9000:9000"   # S3 API（对外暴露）
       - "9001:9001"   # 管理控制台（对外暴露）
     expose:
       - "9000"        # API端口（仅内网）

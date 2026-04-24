@@ -86,16 +86,16 @@
 
             <div class="inscription-records">
               <div class="record-item">
-                <span class="record-label">所属</span>
+                <span class="record-label">申报地区</span>
                 <span class="record-value">{{ heritageDetail.region }}</span>
               </div>
               <div class="record-item">
-                <span class="record-label">纪年</span>
-                <span class="record-value">{{ heritageDetail.declareYear || '不详' }}</span>
+                <span class="record-label">公布时间</span>
+                <span class="record-value">{{ heritageDetail.publishTime || '不详' }}</span>
               </div>
               <div class="record-item">
-                <span class="record-label">传承</span>
-                <span class="record-value">{{ heritageDetail.inheritor || '待考' }}</span>
+                <span class="record-label">保护单位</span>
+                <span class="record-value">{{ heritageDetail.protectionUnit || '待考' }}</span>
               </div>
             </div>
 
@@ -118,14 +118,6 @@
 
         <!-- 详述卷 -->
         <div class="detail-sections">
-          <section class="detail-section" v-if="heritageDetail.content">
-            <div class="section-header">
-              <span class="header-icon">叙</span>
-              <h2 class="header-name">详述</h2>
-            </div>
-            <div class="section-body" v-html="heritageDetail.content"></div>
-          </section>
-
           <section class="detail-section" v-if="heritageDetail.history">
             <div class="section-header">
               <span class="header-icon">源</span>
@@ -133,16 +125,6 @@
             </div>
             <div class="section-body">
               <p>{{ heritageDetail.history }}</p>
-            </div>
-          </section>
-
-          <section class="detail-section" v-if="heritageDetail.feature">
-            <div class="section-header">
-              <span class="header-icon">艺</span>
-              <h2 class="header-name">技艺</h2>
-            </div>
-            <div class="section-body">
-              <p>{{ heritageDetail.feature }}</p>
             </div>
           </section>
         </div>

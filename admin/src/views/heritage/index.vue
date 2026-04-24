@@ -75,7 +75,7 @@
         <div class="frame-corner corner-tr"></div>
         <div class="frame-corner corner-bl"></div>
         <div class="frame-corner corner-br"></div>
-        
+
         <div class="ledger-content">
           <el-table
             :data="tableData"
@@ -83,27 +83,24 @@
             class="study-table"
             :header-cell-style="headerStyle"
             :cell-style="cellStyle"
-            max-height="600"
+            height="400"
           >
-            <el-table-column prop="name" label="项目名称" width="150" fixed="left" show-overflow-tooltip />
+            <el-table-column prop="name" label="项目名称" min-width="100" fixed="left" show-overflow-tooltip />
             <el-table-column label="图片" width="80" align="center">
               <template #default="{ row }">
                 <el-image v-if="row.coverImage" :src="row.coverImage" style="width: 48px; height: 48px; border-radius: 2px; border: 1px solid rgba(212, 201, 184, 0.4);" fit="cover" :preview-src-list="[row.coverImage]" />
                 <span v-else style="color: var(--text-light); font-size: 12px;">—</span>
               </template>
             </el-table-column>
-            <el-table-column prop="categoryName" label="分类" width="90" align="center" />
-            <el-table-column prop="level" label="级别" width="75" align="center" />
-            <el-table-column prop="region" label="地区" width="100" show-overflow-tooltip />
-            <el-table-column prop="declareYear" label="申报年份" width="80" align="center" />
-            <el-table-column prop="inheritor" label="传承人" width="100" show-overflow-tooltip />
-            <el-table-column prop="description" label="简介" min-width="180">
-              <template #default="{ row }">
-                <div class="cell-scroll">{{ row.description || '-' }}</div>
-              </template>
-            </el-table-column>
-            <el-table-column prop="viewCount" label="浏览" width="55" align="center" />
-            <el-table-column prop="favoriteCount" label="收藏" width="55" align="center" />
+            <el-table-column prop="categoryName" label="项目分类" width="80" align="center" />
+            <el-table-column prop="level" label="遗产级别" width="75" align="center" />
+            <el-table-column prop="region" label="申报地区" width="90" show-overflow-tooltip />
+            <el-table-column prop="protectionUnit" label="保护单位" width="100" show-overflow-tooltip />
+            <el-table-column prop="publishTime" label="公布时间" width="75" align="center" />
+            <el-table-column prop="description" label="项目简介" min-width="140" show-overflow-tooltip />
+            <el-table-column prop="history" label="历史渊源" min-width="140" show-overflow-tooltip />
+            <el-table-column prop="viewCount" label="浏览量" width="60" align="center" />
+            <el-table-column prop="favoriteCount" label="收藏数" width="60" align="center" />
             <el-table-column label="操作" width="150" align="center" fixed="right">
               <template #default="{ row }">
                 <div class="action-btns">
@@ -141,7 +138,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="分类" prop="categoryId">
+            <el-form-item label="项目分类" prop="categoryId">
               <el-select v-model="form.categoryId" placeholder="请选择分类" style="width: 100%">
                 <el-option v-for="c in categoryList" :key="c.id" :label="c.name" :value="c.id" />
               </el-select>
@@ -150,7 +147,7 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="级别">
+            <el-form-item label="遗产级别">
               <el-select v-model="form.level" placeholder="请选择" style="width: 100%">
                 <el-option label="国家级" value="国家级" />
                 <el-option label="省级" value="省级" />
@@ -160,37 +157,31 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="地区">
+            <el-form-item label="申报地区">
               <el-input v-model="form.region" placeholder="如：江西景德镇" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="申报年份">
-              <el-input v-model="form.declareYear" placeholder="如：2006年" />
+            <el-form-item label="公布时间">
+              <el-input v-model="form.publishTime" placeholder="如：2006年" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="传承人">
-              <el-input v-model="form.inheritor" placeholder="传承人姓名" />
+            <el-form-item label="保护单位">
+              <el-input v-model="form.protectionUnit" placeholder="保护单位名称" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-form-item label="封面图片">
           <ImageUpload v-model="form.coverImage" />
         </el-form-item>
-        <el-form-item label="简介">
+        <el-form-item label="项目简介">
           <el-input v-model="form.description" type="textarea" :rows="2" placeholder="项目简介" />
-        </el-form-item>
-        <el-form-item label="详细内容">
-          <el-input v-model="form.content" type="textarea" :rows="3" placeholder="详细介绍" />
         </el-form-item>
         <el-form-item label="历史渊源">
           <el-input v-model="form.history" type="textarea" :rows="2" placeholder="历史渊源" />
-        </el-form-item>
-        <el-form-item label="工艺特点">
-          <el-input v-model="form.feature" type="textarea" :rows="2" placeholder="工艺特点" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -205,7 +196,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus } from '@element-plus/icons-vue'
-import { getHeritageList, addHeritage, updateHeritage, deleteHeritage, getCategoryList } from '@/api/heritage'
+import { getHeritageList, getHeritageDetail, addHeritage, updateHeritage, deleteHeritage, getCategoryList } from '@/api/heritage'
 import ImageUpload from '@/components/ImageUpload.vue'
 
 const headerStyle = () => ({
@@ -230,12 +221,12 @@ const tableData = ref([])
 const categoryList = ref([])
 
 const searchForm = reactive({ keyword: '', categoryId: null, level: '' })
-const page = reactive({ pageNum: 1, pageSize: 10, total: 0 })
+const page = reactive({ pageNum: 1, pageSize: 5, total: 0 })
 
 const defaultForm = {
   id: null, name: '', categoryId: null, level: '', region: '',
-  declareYear: '', inheritor: '', description: '', content: '',
-  history: '', feature: '', coverImage: '', sort: 0
+  publishTime: '', protectionUnit: '', description: '',
+  history: '', coverImage: '', sort: 0
 }
 const form = reactive({ ...defaultForm })
 
@@ -284,32 +275,51 @@ const handleAdd = () => {
   dialogVisible.value = true
 }
 
-const handleEdit = (row) => {
+const handleEdit = async (row) => {
   resetForm()
-  form.id = row.id
-  form.name = row.name || ''
-  form.categoryId = row.categoryId || null
-  form.level = row.level || ''
-  form.region = row.region || ''
-  form.declareYear = row.declareYear || ''
-  form.inheritor = row.inheritor || ''
-  form.description = row.description || ''
-  form.content = row.content || ''
-  form.history = row.history || ''
-  form.feature = row.feature || ''
-  form.coverImage = row.coverImage || ''
-  dialogVisible.value = true
+  try {
+    // 获取完整详情数据
+    const res = await getHeritageDetail(row.id)
+    if (res.code === 200 && res.data) {
+      const detail = res.data
+      form.id = detail.id
+      form.name = detail.name || ''
+      form.categoryId = detail.categoryId || null
+      form.level = detail.level || ''
+      form.region = detail.region || ''
+      form.publishTime = detail.publishTime || ''
+      form.protectionUnit = detail.protectionUnit || ''
+      form.description = detail.description || ''
+      form.history = detail.history || ''
+      form.coverImage = detail.coverImage || ''
+      dialogVisible.value = true
+    }
+  } catch (e) {
+    ElMessage.error('获取详情失败')
+  }
 }
 
 const handleDelete = (row) => {
-  ElMessageBox.confirm(`确定删除项目「${row.name}」吗？`, '提示', { type: 'warning' })
+  ElMessageBox.confirm(
+    `确定删除项目「${row.name}」吗？删除后数据将无法恢复。`,
+    '删除确认',
+    {
+      type: 'warning',
+      confirmButtonText: '确定删除',
+      cancelButtonText: '取消'
+    }
+  )
     .then(async () => {
       try {
-        await deleteHeritage(row.id)
-        ElMessage.success('删除成功')
-        loadData()
+        const res = await deleteHeritage(row.id)
+        if (res.code === 200) {
+          ElMessage.success('删除成功')
+          loadData()
+        } else {
+          ElMessage.error(res.msg || '删除失败')
+        }
       } catch (e) {
-        ElMessage.error('删除失败')
+        ElMessage.error('删除失败，请稍后重试')
       }
     })
     .catch(() => {})
@@ -321,16 +331,22 @@ const handleSubmit = async () => {
     if (!valid) return
     submitting.value = true
     try {
+      let res
       if (form.id) {
-        await updateHeritage(form.id, form)
+        res = await updateHeritage(form.id, form)
       } else {
-        await addHeritage(form)
+        res = await addHeritage(form)
       }
-      ElMessage.success(form.id ? '更新成功' : '添加成功')
-      dialogVisible.value = false
-      loadData()
+      if (res.code === 200) {
+        ElMessage.success(form.id ? '更新成功' : '添加成功')
+        dialogVisible.value = false
+        loadData()
+      } else {
+        ElMessage.error(res.msg || '操作失败')
+      }
     } catch (e) {
       console.error('操作失败:', e)
+      ElMessage.error('操作失败，请稍后重试')
     } finally {
       submitting.value = false
     }

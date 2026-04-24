@@ -103,10 +103,10 @@ public class HeritageService {
     public ResponseDTO<Boolean> deleteCategory(Long id) {
         HeritageCategoryEntity existing = heritageCategoryDao.selectById(id);
         if (existing == null) {
-            return ResponseDTO.error("分类不存在");
+            return ResponseDTO.error("分类不存在或已删除");
         }
-        existing.setDeletedFlag(1);
-        heritageCategoryDao.updateById(existing);
+        // 使用 MyBatis-Plus 逻辑删除
+        heritageCategoryDao.deleteById(id);
         return ResponseDTO.succ(true);
     }
 
@@ -119,6 +119,12 @@ public class HeritageService {
         entity.setDeletedFlag(0);
         if (entity.getViewCount() == null) {
             entity.setViewCount(0);
+        }
+        if (entity.getFavoriteCount() == null) {
+            entity.setFavoriteCount(0);
+        }
+        if (entity.getSort() == null) {
+            entity.setSort(0);
         }
         heritageDao.insert(entity);
         return ResponseDTO.succ(entity.getId());
@@ -143,10 +149,10 @@ public class HeritageService {
     public ResponseDTO<Boolean> deleteHeritage(Long id) {
         HeritageEntity existing = heritageDao.selectById(id);
         if (existing == null) {
-            return ResponseDTO.error("项目不存在");
+            return ResponseDTO.error("项目不存在或已删除");
         }
-        existing.setDeletedFlag(1);
-        heritageDao.updateById(existing);
+        // 使用 MyBatis-Plus 逻辑删除，会自动将 deleted_flag 设置为 1
+        heritageDao.deleteById(id);
         return ResponseDTO.succ(true);
     }
 }

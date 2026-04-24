@@ -1,5 +1,6 @@
 package com.feiyi.module.heritage.domain;
 
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.feiyi.common.domain.BaseEntity;
 import lombok.Data;
@@ -31,14 +32,19 @@ public class HeritageEntity extends BaseEntity {
     private String level;
 
     /**
-     * 所属地区
+     * 所属地区（申报地区）
      */
     private String region;
 
     /**
-     * 申报年份
+     * 保护单位
      */
-    private String declareYear;
+    private String protectionUnit;
+
+    /**
+     * 公布时间
+     */
+    private String publishTime;
 
     /**
      * 传承人
@@ -51,19 +57,9 @@ public class HeritageEntity extends BaseEntity {
     private String description;
 
     /**
-     * 详细内容
-     */
-    private String content;
-
-    /**
      * 历史渊源
      */
     private String history;
-
-    /**
-     * 工艺特点
-     */
-    private String feature;
 
     /**
      * 封面图片
@@ -71,9 +67,14 @@ public class HeritageEntity extends BaseEntity {
     private String coverImage;
 
     /**
-     * 浏览次数
+     * 浏览次数（浏览量）
      */
     private Integer viewCount;
+
+    /**
+     * 收藏数
+     */
+    private Integer favoriteCount;
 
     /**
      * 排序
@@ -83,5 +84,6 @@ public class HeritageEntity extends BaseEntity {
     /**
      * 删除标记 0未删除 1已删除
      */
+    @TableLogic(value = "0", delval = "1")
     private Integer deletedFlag;
 }

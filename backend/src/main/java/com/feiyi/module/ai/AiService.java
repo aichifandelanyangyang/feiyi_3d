@@ -277,8 +277,7 @@ public class AiService {
         wrapper.eq(HeritageEntity::getDeletedFlag, 0)
                 .and(w -> w.like(HeritageEntity::getName, topic)
                         .or().like(HeritageEntity::getDescription, topic)
-                        .or().like(HeritageEntity::getHistory, topic)
-                        .or().like(HeritageEntity::getFeature, topic))
+                        .or().like(HeritageEntity::getHistory, topic))
                 .last("LIMIT 5");
         return heritageDao.selectList(wrapper);
     }
@@ -346,7 +345,6 @@ public class AiService {
                 sb.append("\n");
                 if (h.getDescription() != null) sb.append("  简介：").append(h.getDescription()).append("\n");
                 if (h.getHistory() != null) sb.append("  历史渊源：").append(h.getHistory()).append("\n");
-                if (h.getFeature() != null) sb.append("  工艺特点：").append(h.getFeature()).append("\n");
                 sb.append("\n");
             }
         }
@@ -493,10 +491,8 @@ public class AiService {
      * 删除知识（逻辑删除）
      */
     public ResponseDTO<Void> deleteKnowledge(Long id) {
-        KnowledgeEntity entity = new KnowledgeEntity();
-        entity.setId(id);
-        entity.setDeletedFlag(1);
-        knowledgeDao.updateById(entity);
+        // 使用 MyBatis-Plus 逻辑删除
+        knowledgeDao.deleteById(id);
         return ResponseDTO.succ();
     }
 }

@@ -70,35 +70,40 @@
             class="study-table"
             :header-cell-style="headerStyle"
             :cell-style="cellStyle"
+            height="400"
           >
-            <el-table-column label="头像" width="200" align="center">
+            <el-table-column label="头像" width="100" align="center">
               <template #default="{ row }">
-                <div class="avatar-wrap">
-                  <el-avatar :size="36" :src="row.avatar || undefined">{{ (row.username || '?').charAt(0).toUpperCase() }}</el-avatar>
-                </div>
+                <el-avatar :size="36" :src="row.avatar || undefined">
+                  {{ (row.username || '?').charAt(0).toUpperCase() }}
+                </el-avatar>
               </template>
             </el-table-column>
-            <el-table-column prop="username" label="用户名" width="200" show-overflow-tooltip />
-            <el-table-column prop="realName" label="姓名" width="200" show-overflow-tooltip />
-            <el-table-column prop="roleName" label="角色" width="200" align="center">
+            <el-table-column prop="username" label="用户名" min-width="100" show-overflow-tooltip />
+            <el-table-column prop="realName" label="姓名" min-width="80" show-overflow-tooltip />
+            <el-table-column prop="phone" label="手机号" width="150" show-overflow-tooltip />
+            <el-table-column prop="roleName" label="角色" width="150" align="center">
               <template #default="{ row }">
                 <span :class="['role-badge', row.roleType === 1 ? 'admin' : 'visitor']">
                   {{ row.roleType === 1 ? '管理员' : '普通用户' }}
                 </span>
               </template>
             </el-table-column>
-            <el-table-column prop="status" label="状态" min-width="200" align="center">
+            <el-table-column prop="status" label="状态" width="150" align="center">
               <template #default="{ row }">
                 <span :class="['status-badge', row.status === 1 ? 'active' : 'disabled']">
                   {{ row.status === 1 ? '启用' : '禁用' }}
                 </span>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="350" align="center" fixed="right">
+            <el-table-column prop="createTime" label="注册时间" width="150" align="center" />
+            <el-table-column label="操作" width="390" align="center" fixed="right">
               <template #default="{ row }">
                 <div class="action-btns">
                   <button class="action-btn primary" @click="handleEdit(row)">编辑</button>
-                  <button v-if="row.roleType !== 1" :class="['action-btn', row.status === 1 ? 'warning' : 'success']" @click="handleToggleStatus(row)">{{ row.status === 1 ? '禁用' : '启用' }}</button>
+                  <button v-if="row.roleType !== 1" :class="['action-btn', row.status === 1 ? 'warning' : 'success']" @click="handleToggleStatus(row)">
+                    {{ row.status === 1 ? '禁用' : '启用' }}
+                  </button>
                   <button class="action-btn warning" @click="handleResetPwd(row)">重置密码</button>
                   <button v-if="row.roleType !== 1" class="action-btn danger" @click="handleDelete(row)">删除</button>
                 </div>
@@ -108,23 +113,45 @@
 
           <div class="ledger-footer">
             <div class="footer-info">
-              <span class="info-text">共 {{ tableData.length }} 个用户</span>
+              <span class="info-text">共 {{ page.total }} 个用户</span>
             </div>
+            <el-pagination
+              v-model:current-page="page.pageNum"
+              v-model:page-size="page.pageSize"
+              :total="page.total"
+              :page-sizes="[5, 10, 20]"
+              layout="total, prev, pager, next"
+              @current-change="loadData"
+              class="study-pagination"
+            />
           </div>
         </div>
       </div>
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑' : '添加'" width="450px">
-      <el-form :model="form" label-width="80px">
-        <el-form-item label="用户名"><el-input v-model="form.username" :disabled="!!form.id" /></el-form-item>
-        <el-form-item v-if="!form.id" label="密码"><el-input v-model="form.password" type="password" /></el-form-item>
-        <el-form-item label="姓名"><el-input v-model="form.realName" /></el-form-item>
+    <!-- 编辑弹窗 -->
+    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑用户' : '添加用户'" width="500px" destroy-on-close>
+      <el-form :model="form" :rules="rules" ref="formRef" label-width="80px">
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="form.username" :disabled="!!form.id" placeholder="请输入用户名" />
+        </el-form-item>
+        <el-form-item v-if="!form.id" label="密码" prop="password">
+          <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password />
+        </el-form-item>
+        <el-form-item label="姓名" prop="realName">
+          <el-input v-model="form.realName" placeholder="请输入姓名" />
+        </el-form-item>
+        <el-form-item label="手机号">
+          <el-input v-model="form.phone" placeholder="请输入手机号" />
+        </el-form-item>
+        <el-form-item label="邮箱">
+          <el-input v-model="form.email" placeholder="请输入邮箱" />
+        </el-form-item>
         <el-form-item label="头像">
           <ImageUpload v-model="form.avatar" />
         </el-form-item>
-        <el-form-item label="角色">
-          <el-select v-model="form.roleType">
+        <el-form-item label="角色" prop="roleType">
+          <el-select v-model="form.roleType" placeholder="请选择角色" style="width: 100%">
             <el-option label="管理员" :value="1" />
             <el-option label="普通用户" :value="3" />
           </el-select>
@@ -132,7 +159,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
   </div>
@@ -142,7 +169,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus } from '@element-plus/icons-vue'
-import { getUserList, addUser, updateUser, deleteUser, resetPassword, toggleUserStatus } from '@/api/user'
+import { getUserList, getUserDetail, addUser, updateUser, deleteUser, resetPassword, toggleUserStatus } from '@/api/user'
 import ImageUpload from '@/components/ImageUpload.vue'
 
 const headerStyle = () => ({
@@ -160,51 +187,169 @@ const cellStyle = () => ({
 })
 
 const loading = ref(false)
+const submitting = ref(false)
 const dialogVisible = ref(false)
+const formRef = ref(null)
 const tableData = ref([])
+
 const searchForm = reactive({ keyword: '', roleType: null })
-const form = reactive({ id: null, username: '', password: '', realName: '', avatar: '', roleType: 3 })
+const page = reactive({ pageNum: 1, pageSize: 5, total: 0 })
+
+const defaultForm = {
+  id: null,
+  username: '',
+  password: '',
+  realName: '',
+  phone: '',
+  email: '',
+  avatar: '',
+  roleType: 3
+}
+const form = reactive({ ...defaultForm })
+
+const rules = {
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+  roleType: [{ required: true, message: '请选择角色', trigger: 'change' }]
+}
 
 const loadData = async () => {
   loading.value = true
   try {
-    const res = await getUserList(searchForm)
-    tableData.value = res.data?.list || []
+    const res = await getUserList({ ...searchForm, ...page })
+    if (res.code === 200 && res.data) {
+      tableData.value = res.data.list || []
+      page.total = res.data.total || 0
+    }
   } catch (e) {
-    tableData.value = [
-      { id: 1, username: 'admin', realName: '管理员', roleType: 1, roleName: '管理员', status: 1 }
-    ]
-  } finally { loading.value = false }
+    console.error('获取用户列表失败:', e)
+    tableData.value = []
+    page.total = 0
+  } finally {
+    loading.value = false
+  }
 }
 
-const handleAdd = () => { Object.assign(form, { id: null, username: '', password: '', realName: '', avatar: '', roleType: 3 }); dialogVisible.value = true }
-const handleEdit = (row) => { Object.assign(form, row); dialogVisible.value = true }
+const resetForm = () => {
+  Object.assign(form, { ...defaultForm })
+}
+
+const handleAdd = () => {
+  resetForm()
+  dialogVisible.value = true
+}
+
+const handleEdit = async (row) => {
+  resetForm()
+  try {
+    const res = await getUserDetail(row.id)
+    if (res.code === 200 && res.data) {
+      const detail = res.data
+      form.id = detail.id
+      form.username = detail.username || ''
+      form.realName = detail.realName || ''
+      form.phone = detail.phone || ''
+      form.email = detail.email || ''
+      form.avatar = detail.avatar || ''
+      form.roleType = detail.roleType || 3
+      dialogVisible.value = true
+    }
+  } catch (e) {
+    ElMessage.error('获取用户详情失败')
+  }
+}
+
 const handleDelete = (row) => {
-  ElMessageBox.confirm('确定删除？').then(async () => {
-    await deleteUser(row.id); ElMessage.success('删除成功'); loadData()
-  }).catch(() => {})
+  ElMessageBox.confirm(
+    `确定删除用户「${row.username}」吗？删除后数据将无法恢复。`,
+    '删除确认',
+    { type: 'warning', confirmButtonText: '确定删除', cancelButtonText: '取消' }
+  )
+    .then(async () => {
+      try {
+        const res = await deleteUser(row.id)
+        if (res.code === 200) {
+          ElMessage.success('删除成功')
+          loadData()
+        } else {
+          ElMessage.error(res.msg || '删除失败')
+        }
+      } catch (e) {
+        ElMessage.error('删除失败')
+      }
+    })
+    .catch(() => {})
 }
+
 const handleResetPwd = (row) => {
-  ElMessageBox.prompt('输入新密码', '重置密码').then(async ({ value }) => {
-    await resetPassword(row.id, value); ElMessage.success('重置成功')
-  }).catch(() => {})
+  ElMessageBox.prompt('请输入新密码', '重置密码', {
+    inputPattern: /^.{6,20}$/,
+    inputErrorMessage: '密码长度需为6-20个字符',
+    confirmButtonText: '确定',
+    cancelButtonText: '取消'
+  })
+    .then(async ({ value }) => {
+      try {
+        const res = await resetPassword(row.id, value)
+        if (res.code === 200) {
+          ElMessage.success('密码重置成功')
+        } else {
+          ElMessage.error(res.msg || '重置失败')
+        }
+      } catch (e) {
+        ElMessage.error('重置密码失败')
+      }
+    })
+    .catch(() => {})
 }
+
 const handleToggleStatus = async (row) => {
   const action = row.status === 1 ? '禁用' : '启用'
   try {
     await ElMessageBox.confirm(`确定${action}用户「${row.username}」？`, '提示', { type: 'warning' })
-    await toggleUserStatus(row.id)
-    ElMessage.success(`已${action}`)
-    loadData()
-  } catch {}
-}
-const handleSubmit = async () => {
-  if (form.id) await updateUser(form)
-  else await addUser(form)
-  ElMessage.success('操作成功'); dialogVisible.value = false; loadData()
+    const res = await toggleUserStatus(row.id)
+    if (res.code === 200) {
+      ElMessage.success(`已${action}`)
+      loadData()
+    } else {
+      ElMessage.error(res.msg || '操作失败')
+    }
+  } catch (e) {
+    // 用户取消或请求失败
+  }
 }
 
-onMounted(() => loadData())
+const handleSubmit = async () => {
+  if (!formRef.value) return
+  await formRef.value.validate(async (valid) => {
+    if (!valid) return
+    submitting.value = true
+    try {
+      let res
+      if (form.id) {
+        res = await updateUser(form)
+      } else {
+        res = await addUser(form)
+      }
+      if (res.code === 200) {
+        ElMessage.success(form.id ? '更新成功' : '添加成功')
+        dialogVisible.value = false
+        loadData()
+      } else {
+        ElMessage.error(res.msg || '操作失败')
+      }
+    } catch (e) {
+      console.error('操作失败:', e)
+      ElMessage.error('操作失败，请稍后重试')
+    } finally {
+      submitting.value = false
+    }
+  })
+}
+
+onMounted(() => {
+  loadData()
+})
 </script>
 
 <style scoped lang="scss">
@@ -422,15 +567,6 @@ onMounted(() => loadData())
     background: rgba(201, 168, 76, 0.04) !important;
   }
 
-  .avatar-wrap {
-    display: flex;
-    justify-content: center;
-
-    :deep(.el-avatar) {
-      border: 1px solid rgba(212, 201, 184, 0.4);
-    }
-  }
-
   .role-badge {
     display: inline-block;
     padding: 2px 8px;
@@ -473,8 +609,9 @@ onMounted(() => loadData())
 
   .action-btns {
     display: flex;
-    gap: 6px;
+    gap: 4px;
     justify-content: center;
+    flex-wrap: wrap;
 
     .action-btn {
       padding: 4px 8px;
@@ -534,7 +671,7 @@ onMounted(() => loadData())
 .ledger-footer {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   padding: 16px 20px;
   border-top: 1px solid rgba(212, 201, 184, 0.25);
 
@@ -543,6 +680,38 @@ onMounted(() => loadData())
       font-size: 13px;
       color: var(--text-light);
       letter-spacing: 1px;
+    }
+  }
+}
+
+/* 分页样式 */
+.study-pagination {
+  :deep(.el-pagination__total) {
+    font-size: 13px;
+    color: var(--text-light);
+  }
+
+  :deep(.el-pager li) {
+    background: transparent;
+    border: 1px solid rgba(212, 201, 184, 0.3);
+    border-radius: 4px;
+    margin: 0 4px;
+
+    &:hover, &.is-active {
+      border-color: rgba(201, 168, 76, 0.5);
+      background: rgba(201, 168, 76, 0.08);
+      color: var(--text-color);
+    }
+  }
+
+  :deep(.btn-prev), :deep(.btn-next) {
+    background: transparent;
+    border: 1px solid rgba(212, 201, 184, 0.3);
+    border-radius: 4px;
+
+    &:hover {
+      border-color: rgba(201, 168, 76, 0.5);
+      background: rgba(201, 168, 76, 0.08);
     }
   }
 }

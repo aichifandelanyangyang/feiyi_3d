@@ -65,7 +65,7 @@ public class UserEntity {
     /**
      * 删除标记
      */
-    @TableLogic
+    @TableLogic(value = "0", delval = "1")
     private Integer deletedFlag;
 
     /**
