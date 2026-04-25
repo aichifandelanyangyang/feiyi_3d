@@ -47,6 +47,9 @@ public class CommunityPostVO {
     @Schema(description = "点赞次数")
     private Integer likeCount;
 
+    @Schema(description = "收藏次数")
+    private Integer favoriteCount;
+
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
 }

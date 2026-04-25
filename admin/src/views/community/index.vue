@@ -94,6 +94,7 @@
             </el-table-column>
             <el-table-column prop="viewCount" label="浏览" width="60" align="center" />
             <el-table-column prop="likeCount" label="点赞" width="60" align="center" />
+            <el-table-column prop="favoriteCount" label="收藏" width="60" align="center" />
             <el-table-column prop="createTime" label="发布时间" width="150" align="center">
               <template #default="{ row }">
                 {{ row.createTime ? row.createTime.replace('T', ' ').slice(0, 16) : '-' }}

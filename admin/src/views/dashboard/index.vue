@@ -207,11 +207,12 @@ const fmtTime = (t) => {
 }
 
 const loadData = async () => {
-  const [exRes, htRes, usRes, cmRes] = await Promise.allSettled([
+  const [exRes, htRes, usRes, cmRes, cmAllRes] = await Promise.allSettled([
     getExhibitList({ page: 1, pageSize: 5 }),
     getHeritageList({ page: 1, pageSize: 1 }),
     getUserList({ page: 1, pageSize: 1 }),
-    getCommunityList({ page: 1, pageSize: 10, status: 0 })
+    getCommunityList({ page: 1, pageSize: 10, status: 0 }),
+    getCommunityList({ page: 1, pageSize: 1 })
   ])
 
   if (exRes.status === 'fulfilled' && exRes.value?.data) {
@@ -229,8 +230,11 @@ const loadData = async () => {
   }
   if (cmRes.status === 'fulfilled' && cmRes.value?.data) {
     const d = cmRes.value.data
-    stats.postCount = d.total ?? (d.records || d.list || []).length
     pendingPosts.value = (d.records || d.list || []).slice(0, 5)
+  }
+  if (cmAllRes.status === 'fulfilled' && cmAllRes.value?.data) {
+    const d = cmAllRes.value.data
+    stats.postCount = d.total ?? (d.records || d.list || []).length
   }
 }
 

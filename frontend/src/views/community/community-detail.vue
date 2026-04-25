@@ -117,13 +117,27 @@
                 <span class="mark-count">{{ post.viewCount || 0 }}</span>
                 <span class="mark-label">览</span>
               </div>
-              <div class="stat-mark">
-                <el-icon><Star /></el-icon>
+              <button
+                class="stat-mark like-btn"
+                :class="{ active: isLiked }"
+                @click="handleLike"
+              >
+                <span class="heart-icon">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  </svg>
+                </span>
                 <span class="mark-count">{{ post.likeCount || 0 }}</span>
                 <span class="mark-label">赞</span>
-              </div>
+              </button>
             </div>
-            <div class="collector-seal">已藏</div>
+            <button
+              class="collector-seal"
+              :class="{ active: isFavorited }"
+              @click="handleFavorite"
+            >
+              {{ isFavorited ? '已藏' : '入藏' }}
+            </button>
           </div>
         </div>
       </div>
@@ -137,13 +151,15 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, View, Star } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store'
-import { getCommunityDetail } from '@/api/community'
+import { getCommunityDetail, addPostFavorite, removePostFavorite, checkPostFavorite, addPostLike, removePostLike, checkPostLike } from '@/api/community'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 const loading = ref(false)
 const post = ref({})
+const isFavorited = ref(false)
+const isLiked = ref(false)
 
 const formatTime = (time) => {
   if (!time) return ''
@@ -157,10 +173,61 @@ const fetchDetail = async () => {
     if (res.data) {
       post.value = res.data
     }
+    // 检查收藏和点赞状态
+    if (userStore.isLoggedIn) {
+      const favRes = await checkPostFavorite(route.params.id)
+      isFavorited.value = favRes.data || false
+      const likeRes = await checkPostLike(route.params.id)
+      isLiked.value = likeRes.data || false
+    }
   } catch (e) {
     console.error('获取详情失败', e)
   } finally {
     loading.value = false
+  }
+}
+
+const handleFavorite = async () => {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    router.push('/login')
+    return
+  }
+  try {
+    if (isFavorited.value) {
+      await removePostFavorite(route.params.id)
+      isFavorited.value = false
+      ElMessage.success('已取消收藏')
+    } else {
+      await addPostFavorite(route.params.id)
+      isFavorited.value = true
+      ElMessage.success('收藏成功')
+    }
+  } catch (e) {
+    // handled by interceptor
+  }
+}
+
+const handleLike = async () => {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    router.push('/login')
+    return
+  }
+  try {
+    if (isLiked.value) {
+      await removePostLike(route.params.id)
+      isLiked.value = false
+      post.value.likeCount = Math.max(0, post.value.likeCount - 1)
+      ElMessage.success('已取消点赞')
+    } else {
+      await addPostLike(route.params.id)
+      isLiked.value = true
+      post.value.likeCount = post.value.likeCount + 1
+      ElMessage.success('点赞成功')
+    }
+  } catch (e) {
+    // handled by interceptor
   }
 }
 
@@ -507,6 +574,41 @@ onMounted(() => fetchDetail())
         letter-spacing: 1px;
       }
     }
+
+    .like-btn {
+      padding: 4px 8px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      transition: all var(--transition);
+
+      .heart-icon {
+        display: flex;
+        align-items: center;
+        color: rgba(201, 168, 76, 0.7);
+        transition: color var(--transition);
+      }
+
+      &:hover {
+        background: rgba(201, 168, 76, 0.08);
+        border-color: rgba(201, 168, 76, 0.3);
+
+        .heart-icon {
+          color: var(--gold);
+        }
+      }
+
+      &.active {
+        .heart-icon {
+          color: var(--primary-color);
+        }
+
+        .mark-count {
+          color: var(--primary-color);
+        }
+      }
+    }
   }
 
   .collector-seal {
@@ -519,6 +621,19 @@ onMounted(() => fetchDetail())
     letter-spacing: 3px;
     transform: rotate(-2deg);
     background: rgba(166, 64, 41, 0.04);
+    cursor: pointer;
+    transition: all var(--transition);
+
+    &:hover {
+      background: rgba(166, 64, 41, 0.08);
+      border-color: rgba(166, 64, 41, 0.4);
+    }
+
+    &.active {
+      background: rgba(166, 64, 41, 0.12);
+      border-color: rgba(166, 64, 41, 0.5);
+      color: rgba(166, 64, 41, 0.8);
+    }
   }
 }
 </style>

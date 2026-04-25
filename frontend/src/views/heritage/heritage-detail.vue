@@ -105,9 +105,6 @@
             </div>
 
             <div class="inscription-actions">
-              <button v-if="heritageDetail.hasExhibit" class="action-primary" @click="goExhibition">
-                <span>展厅观摩</span>
-              </button>
               <button class="action-secondary" @click="handleFavorite">
                 <el-icon><Star /></el-icon>
                 <span>{{ isFavorited ? '已藏' : '入藏' }}</span>
@@ -182,11 +179,6 @@ const goHome = () => {
 // 返回列表
 const goBack = () => {
   router.push('/heritage-list')
-}
-
-// 跳转展厅
-const goExhibition = () => {
-  router.push('/exhibition-hall')
 }
 
 // 获取详情数据方法

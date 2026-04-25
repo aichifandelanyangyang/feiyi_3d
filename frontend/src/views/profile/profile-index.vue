@@ -241,7 +241,7 @@
                     <span class="item-date">{{ formatTime(post.createTime) }}</span>
                     <div class="item-stats">
                       <span><el-icon><View /></el-icon>{{ post.viewCount || 0 }}</span>
-                      <span><el-icon><Star /></el-icon>{{ post.likeCount || 0 }}</span>
+                      <span><span class="heart-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>{{ post.likeCount || 0 }}</span>
                     </div>
                   </div>
                 </div>
@@ -260,6 +260,112 @@
               />
             </div>
           </div>
+
+          <!-- 收藏帖子 -->
+          <div v-show="activeSection === 'postFavorites'" class="section-content">
+            <div class="section-header">
+              <h3 class="section-name">藏帖雅集</h3>
+              <p class="section-note">收藏的社区帖子，共 {{ postFavTotal }} 篇</p>
+            </div>
+            <div v-loading="postFavLoading" class="manuscript-list">
+              <div v-if="postFavList.length === 0 && !postFavLoading" class="empty-state">
+                <div class="empty-illustration">
+                  <div class="empty-scroll"></div>
+                </div>
+                <p class="empty-text">暂无藏帖</p>
+                <p class="empty-hint">浏览社区讨论，收藏感兴趣的帖子</p>
+                <el-button type="primary" text @click="router.push('/community')">去探索 →</el-button>
+              </div>
+              <div
+                v-for="item in postFavList"
+                :key="item.id"
+                class="manuscript-item"
+                @click="router.push(`/community/${item.postId}`)"
+              >
+                <div class="item-body">
+                  <h4>{{ item.postTitle }}</h4>
+                  <p class="item-excerpt">{{ item.postContent }}</p>
+                  <div class="item-footer">
+                    <span class="item-author">
+                      <el-avatar :size="20" :src="item.authorAvatar || undefined">
+                        {{ (item.authorName || '?').charAt(0).toUpperCase() }}
+                      </el-avatar>
+                      {{ item.authorName }}
+                    </span>
+                    <div class="item-stats">
+                      <span><el-icon><View /></el-icon>{{ item.viewCount || 0 }}</span>
+                      <span><span class="heart-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>{{ item.likeCount || 0 }}</span>
+                    </div>
+                  </div>
+                </div>
+                <button class="remove-btn" @click.stop="handleRemovePostFav(item)">
+                  <el-icon><Close /></el-icon>
+                </button>
+              </div>
+            </div>
+            <div v-if="postFavTotal > postFavPageSize" class="page-turn">
+              <el-pagination
+                v-model:current-page="postFavPageNum"
+                :page-size="postFavPageSize"
+                :total="postFavTotal"
+                layout="prev, pager, next"
+                @current-change="fetchPostFavorites"
+              />
+            </div>
+          </div>
+
+          <!-- 点赞帖子 -->
+          <div v-show="activeSection === 'postLikes'" class="section-content">
+            <div class="section-header">
+              <h3 class="section-name">点赞留痕</h3>
+              <p class="section-note">点赞的社区帖子，共 {{ postLikeTotal }} 篇</p>
+            </div>
+            <div v-loading="postLikeLoading" class="manuscript-list">
+              <div v-if="postLikeList.length === 0 && !postLikeLoading" class="empty-state">
+                <div class="empty-illustration">
+                  <div class="empty-scroll"></div>
+                </div>
+                <p class="empty-text">暂无点赞</p>
+                <p class="empty-hint">浏览社区讨论，点赞感兴趣的帖子</p>
+                <el-button type="primary" text @click="router.push('/community')">去探索 →</el-button>
+              </div>
+              <div
+                v-for="item in postLikeList"
+                :key="item.id"
+                class="manuscript-item"
+                @click="router.push(`/community/${item.postId}`)"
+              >
+                <div class="item-body">
+                  <h4>{{ item.postTitle }}</h4>
+                  <p class="item-excerpt">{{ item.postContent }}</p>
+                  <div class="item-footer">
+                    <span class="item-author">
+                      <el-avatar :size="20" :src="item.authorAvatar || undefined">
+                        {{ (item.authorName || '?').charAt(0).toUpperCase() }}
+                      </el-avatar>
+                      {{ item.authorName }}
+                    </span>
+                    <div class="item-stats">
+                      <span><el-icon><View /></el-icon>{{ item.viewCount || 0 }}</span>
+                      <span><span class="heart-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>{{ item.likeCount || 0 }}</span>
+                    </div>
+                  </div>
+                </div>
+                <button class="remove-btn" @click.stop="handleRemovePostLike(item)">
+                  <el-icon><Close /></el-icon>
+                </button>
+              </div>
+            </div>
+            <div v-if="postLikeTotal > postLikePageSize" class="page-turn">
+              <el-pagination
+                v-model:current-page="postLikePageNum"
+                :page-size="postLikePageSize"
+                :total="postLikeTotal"
+                layout="prev, pager, next"
+                @current-change="fetchPostLikes"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </main>
@@ -272,11 +378,11 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Camera, View, Star, Document, User, Phone, Message, Check,
-  Picture, Close, Collection, ChatLineRound, EditPen
+  Picture, Close, Collection, ChatLineRound, EditPen, Promotion
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store'
 import { getUserInfo, updateProfile, uploadImage, getFavoriteList, removeFavorite } from '@/api/user'
-import { getMyPosts } from '@/api/community'
+import { getMyPosts, getPostFavoriteList, removePostFavorite, getPostLikeList, removePostLike } from '@/api/community'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -286,7 +392,9 @@ const activeSection = ref('info')
 const archiveMenu = [
   { key: 'info', label: '个人笺档', desc: '档案信息管理', icon: 'Document', index: '壹' },
   { key: 'favorites', label: '藏品目录', desc: '收藏的非遗珍品', icon: 'Collection', index: '贰' },
-  { key: 'posts', label: '言论辑录', desc: '发表的讨论帖子', icon: 'ChatLineRound', index: '叁' }
+  { key: 'posts', label: '言论辑录', desc: '发表的讨论帖子', icon: 'ChatLineRound', index: '叁' },
+  { key: 'postFavorites', label: '藏帖雅集', desc: '收藏的社区帖子', icon: 'EditPen', index: '肆' },
+  { key: 'postLikes', label: '点赞留痕', desc: '点赞的社区帖子', icon: 'Promotion', index: '伍' }
 ]
 
 // === 个人信息 ===
@@ -398,6 +506,62 @@ const handleUserCommand = (command) => {
   }
 }
 
+// === 收藏帖子 ===
+const postFavLoading = ref(false)
+const postFavList = ref([])
+const postFavPageNum = ref(1)
+const postFavPageSize = ref(10)
+const postFavTotal = ref(0)
+
+const fetchPostFavorites = async () => {
+  postFavLoading.value = true
+  try {
+    const res = await getPostFavoriteList({ pageNum: postFavPageNum.value, pageSize: postFavPageSize.value })
+    postFavList.value = res.data?.list || []
+    postFavTotal.value = res.data?.total || 0
+  } catch (e) {
+    console.error('获取收藏帖子失败', e)
+  } finally {
+    postFavLoading.value = false
+  }
+}
+
+const handleRemovePostFav = (item) => {
+  ElMessageBox.confirm(`确定取消收藏「${item.postTitle}」？`, '提示').then(async () => {
+    await removePostFavorite(item.postId)
+    ElMessage.success('已取消收藏')
+    fetchPostFavorites()
+  }).catch(() => {})
+}
+
+// === 点赞帖子 ===
+const postLikeLoading = ref(false)
+const postLikeList = ref([])
+const postLikePageNum = ref(1)
+const postLikePageSize = ref(10)
+const postLikeTotal = ref(0)
+
+const fetchPostLikes = async () => {
+  postLikeLoading.value = true
+  try {
+    const res = await getPostLikeList({ pageNum: postLikePageNum.value, pageSize: postLikePageSize.value })
+    postLikeList.value = res.data?.list || []
+    postLikeTotal.value = res.data?.total || 0
+  } catch (e) {
+    console.error('获取点赞帖子失败', e)
+  } finally {
+    postLikeLoading.value = false
+  }
+}
+
+const handleRemovePostLike = (item) => {
+  ElMessageBox.confirm(`确定取消点赞「${item.postTitle}」？`, '提示').then(async () => {
+    await removePostLike(item.postId)
+    ElMessage.success('已取消点赞')
+    fetchPostLikes()
+  }).catch(() => {})
+}
+
 onMounted(() => {
   if (!userStore.isLoggedIn) {
     ElMessage.warning('请先登录')
@@ -407,6 +571,8 @@ onMounted(() => {
   fetchProfile()
   fetchFavorites()
   fetchMyPosts()
+  fetchPostFavorites()
+  fetchPostLikes()
 })
 </script>
 
@@ -1107,6 +1273,18 @@ onMounted(() => {
         letter-spacing: 0.5px;
       }
 
+      .item-author {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text-secondary);
+
+        .el-avatar {
+          border: 1px solid rgba(212, 201, 184, 0.3);
+        }
+      }
+
       .item-stats {
         display: flex;
         gap: 16px;
@@ -1117,6 +1295,11 @@ onMounted(() => {
           gap: 4px;
           font-size: 12px;
           color: var(--text-light);
+
+          .heart-icon {
+            display: flex;
+            align-items: center;
+          }
         }
       }
     }
@@ -1126,6 +1309,36 @@ onMounted(() => {
     margin-top: 12px;
     padding-top: 12px;
     border-top: 1px dashed rgba(212, 201, 184, 0.4);
+  }
+
+  .remove-btn {
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(212, 201, 184, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-light);
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0;
+    transition: all var(--transition);
+
+    &:hover {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+      color: #fff;
+    }
+  }
+
+  &:hover .remove-btn {
+    opacity: 1;
   }
 }
 

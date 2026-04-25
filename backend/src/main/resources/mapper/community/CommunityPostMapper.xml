@@ -15,6 +15,7 @@
             p.reject_reason,
             p.view_count,
             p.like_count,
+            (SELECT COUNT(1) FROM t_community_favorite f WHERE f.post_id = p.id) AS favoriteCount,
             p.create_time
         FROM t_community_post p
         LEFT JOIN t_user u ON p.user_id = u.id

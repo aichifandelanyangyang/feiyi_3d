@@ -49,6 +49,68 @@ public class CommunityController {
         return communityService.myPosts(authHeader, query);
     }
 
+    @Operation(summary = "收藏帖子")
+    @PostMapping("/community/favorite/{postId}")
+    public ResponseDTO<Boolean> addFavorite(@RequestHeader("Authorization") String authHeader,
+                                            @PathVariable Long postId) {
+        return communityService.addFavorite(authHeader, postId);
+    }
+
+    @Operation(summary = "取消收藏")
+    @PostMapping("/community/unfavorite/{postId}")
+    public ResponseDTO<Boolean> removeFavorite(@RequestHeader("Authorization") String authHeader,
+                                               @PathVariable Long postId) {
+        return communityService.removeFavorite(authHeader, postId);
+    }
+
+    @Operation(summary = "检查是否已收藏")
+    @GetMapping("/community/favorite/check/{postId}")
+    public ResponseDTO<Boolean> checkFavorite(@RequestHeader("Authorization") String authHeader,
+                                               @PathVariable Long postId) {
+        return communityService.checkFavorite(authHeader, postId);
+    }
+
+    @Operation(summary = "我的帖子收藏列表")
+    @GetMapping("/community/favorite/list")
+    public ResponseDTO<PageResultDTO<CommunityFavoriteVO>> favoriteList(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        return communityService.favoriteList(authHeader, pageNum, pageSize);
+    }
+
+    // ===== 帖子点赞接口 =====
+
+    @Operation(summary = "点赞帖子")
+    @PostMapping("/community/like/{postId}")
+    public ResponseDTO<Boolean> addLike(@RequestHeader("Authorization") String authHeader,
+                                        @PathVariable Long postId) {
+        return communityService.addLike(authHeader, postId);
+    }
+
+    @Operation(summary = "取消点赞")
+    @PostMapping("/community/unlike/{postId}")
+    public ResponseDTO<Boolean> removeLike(@RequestHeader("Authorization") String authHeader,
+                                           @PathVariable Long postId) {
+        return communityService.removeLike(authHeader, postId);
+    }
+
+    @Operation(summary = "检查是否已点赞")
+    @GetMapping("/community/like/check/{postId}")
+    public ResponseDTO<Boolean> checkLike(@RequestHeader("Authorization") String authHeader,
+                                          @PathVariable Long postId) {
+        return communityService.checkLike(authHeader, postId);
+    }
+
+    @Operation(summary = "我的点赞帖子列表")
+    @GetMapping("/community/like/list")
+    public ResponseDTO<PageResultDTO<CommunityFavoriteVO>> likeList(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        return communityService.likeList(authHeader, pageNum, pageSize);
+    }
+
     // ===== 后台管理接口 =====
 
     @Operation(summary = "后台帖子列表")
