@@ -71,7 +71,7 @@
 
 <script setup>
 import { ref, nextTick, onMounted } from 'vue'
-import { aiChat } from '@/api/ai'
+import { aiChatStream } from '@/api/ai'
 
 const isOpen = ref(false)
 const inputText = ref('')
@@ -193,43 +193,39 @@ const sendMessage = async () => {
   await nextTick()
   scrollToBottom()
 
-  try {
-    // 构建历史（最近10条）
-    const history = messages.value
-      .slice(-11, -1)
-      .filter(m => m.role === 'user' || m.role === 'assistant')
-      .map(m => ({ role: m.role, content: m.content }))
+  // 先添加空的 AI 消息占位
+  const msgIndex = messages.value.length
+  messages.value.push({ role: 'assistant', content: '', sources: [] })
 
-    const res = await aiChat({ message: text, history })
+  // 构建历史消息
+  const history = messages.value
+    .slice(-11, -1)
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .map(m => ({ role: m.role, content: m.content }))
 
-    if (res.code === 200 && res.data) {
-      const reply = res.data.reply || '抱歉，暂时无法回答。'
-      // 打字机效果
-      const msgIndex = messages.value.length
-      messages.value.push({ role: 'assistant', content: '', sources: res.data.sources || [] })
-      loading.value = false
-
-      let charIndex = 0
-      const typeInterval = setInterval(() => {
-        if (charIndex < reply.length) {
-          messages.value[msgIndex].content += reply[charIndex]
-          charIndex++
-          scrollToBottom()
-        } else {
-          clearInterval(typeInterval)
+  // 调用 SSE 流式 API
+  aiChatStream(
+    { message: text, history },
+    {
+      onMetadata: (data) => {
+        messages.value[msgIndex].sources = data.sources || []
+        loading.value = false
+      },
+      onContent: (textChunk) => {
+        messages.value[msgIndex].content += textChunk
+        scrollToBottom()
+      },
+      onDone: () => {
+        // 流式结束
+      },
+      onError: (errMsg) => {
+        if (!messages.value[msgIndex].content) {
+          messages.value[msgIndex].content = errMsg || '服务异常，请稍后再试'
         }
-      }, 20)
-    } else {
-      messages.value.push({ role: 'assistant', content: res.msg || '请求失败，请稍后再试。' })
-      loading.value = false
+        loading.value = false
+      }
     }
-  } catch (e) {
-    messages.value.push({ role: 'assistant', content: '网络异常，请稍后再试。' })
-    loading.value = false
-  }
-
-  await nextTick()
-  scrollToBottom()
+  )
 }
 </script>
 

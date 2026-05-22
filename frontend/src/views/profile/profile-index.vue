@@ -3,7 +3,7 @@
     <!-- 头部导航 -->
     <header class="page-header">
       <div class="logo" @click="router.push('/')">
-        <img src="@/assets/images/logo.svg" alt="logo" class="logo-img" />
+        <img src="../../../public/imgs/logo1.jpg" alt="logo" class="logo-img" />
         <span class="logo-text">非遗3D数字化交互平台</span>
       </div>
       <nav class="nav-menu">

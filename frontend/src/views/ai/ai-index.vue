@@ -3,7 +3,7 @@
     <!-- 头部导航 -->
     <header class="page-header">
       <div class="logo" @click="router.push('/')">
-        <img src="@/assets/images/logo.svg" alt="logo" class="logo-img" />
+        <img src="../../../public/imgs/logo1.jpg" alt="logo" class="logo-img" />
         <span class="logo-text">非遗3D数字化交互平台</span>
       </div>
       <nav class="nav-menu">
@@ -59,7 +59,6 @@
               @click="switchConversation(conv.id)"
             >
               <span class="history-title">{{ conv.title }}</span>
-              <span class="history-time">{{ conv.date }}</span>
               <button class="history-delete" @click.stop="deleteConversation(conv.id)" title="删除">
                 ×
               </button>
@@ -182,7 +181,7 @@
 import { ref, reactive, nextTick, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { aiChat } from '@/api/ai'
+import { aiChatStream } from '@/api/ai'
 import { useUserStore } from '@/store'
 
 const router = useRouter()
@@ -430,48 +429,52 @@ const sendMessage = async () => {
   await nextTick()
   scrollToBottom()
 
-  try {
-    const history = messages.value
-      .slice(-11, -1)
-      .filter(m => m.role === 'user' || m.role === 'assistant')
-      .map(m => ({ role: m.role, content: m.content }))
+  // 先添加空的 AI 消息占位
+  const msgIndex = messages.value.length
+  messages.value.push({
+    role: 'assistant',
+    content: '',
+    sources: [],
+    exhibits: [],
+    showExhibits: false,
+    time: getNow()
+  })
 
-    const res = await aiChat({ message: text, history })
+  // 构建历史消息
+  const history = messages.value
+    .slice(-11, -1)
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .map(m => ({ role: m.role, content: m.content }))
 
-    if (res.code === 200 && res.data) {
-      const reply = res.data.reply || '抱歉，暂时无法回答。'
-      const msgIndex = messages.value.length
-      messages.value.push({ role: 'assistant', content: '', sources: res.data.sources || [], exhibits: res.data.exhibits || [], showExhibits: false, time: getNow() })
-      loading.value = false
-
-      let charIndex = 0
-      const typeInterval = setInterval(() => {
-        if (charIndex < reply.length) {
-          messages.value[msgIndex].content += reply[charIndex]
-          charIndex++
-          scrollToBottom()
-        } else {
-          clearInterval(typeInterval)
-          // 打字结束后延迟显示展品推荐
-          if (messages.value[msgIndex].exhibits && messages.value[msgIndex].exhibits.length) {
-            setTimeout(() => {
-              messages.value[msgIndex].showExhibits = true
-              nextTick(() => scrollToBottom())
-            }, 400)
-          }
+  // 调用 SSE 流式 API
+  aiChatStream(
+    { message: text, history },
+    {
+      onMetadata: (data) => {
+        messages.value[msgIndex].sources = data.sources || []
+        messages.value[msgIndex].exhibits = data.exhibits || []
+        loading.value = false
+      },
+      onContent: (textChunk) => {
+        messages.value[msgIndex].content += textChunk
+        scrollToBottom()
+      },
+      onDone: () => {
+        if (messages.value[msgIndex].exhibits?.length) {
+          setTimeout(() => {
+            messages.value[msgIndex].showExhibits = true
+            nextTick(() => scrollToBottom())
+          }, 400)
         }
-      }, 20)
-    } else {
-      messages.value.push({ role: 'assistant', content: res.msg || '请求失败，请稍后再试。', time: getNow() })
-      loading.value = false
+      },
+      onError: (errMsg) => {
+        if (!messages.value[msgIndex].content) {
+          messages.value[msgIndex].content = errMsg || '服务异常，请稍后再试'
+        }
+        loading.value = false
+      }
     }
-  } catch (e) {
-    messages.value.push({ role: 'assistant', content: '网络异常，请稍后再试。', time: getNow() })
-    loading.value = false
-  }
-
-  await nextTick()
-  scrollToBottom()
+  )
 }
 
 onMounted(() => {
@@ -660,13 +663,6 @@ onMounted(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     padding-right: 18px;
-  }
-
-  .history-time {
-    display: block;
-    font-size: 11px;
-    color: var(--text-light);
-    margin-top: 2px;
   }
 
   .history-delete {
@@ -865,17 +861,19 @@ onMounted(() => {
   .md-h1, .md-h2, .md-h3, .md-h4 {
     font-family: var(--font-serif);
     color: var(--text-color);
-    margin: 12px 0 8px;
+    margin: 14px 0 10px;
     letter-spacing: 2px;
+    line-height: 1.5;
   }
-  .md-h1 { font-size: 18px; font-weight: 700; border-bottom: 1px solid rgba(201, 168, 76, 0.2); padding-bottom: 6px; }
-  .md-h2 { font-size: 16px; font-weight: 600; }
-  .md-h3 { font-size: 15px; font-weight: 600; color: rgba(166, 64, 41, 0.8); }
-  .md-h4 { font-size: 14px; font-weight: 500; }
+  .md-h1 { font-size: 20px; font-weight: 700; border-bottom: 1px solid rgba(201, 168, 76, 0.2); padding-bottom: 6px; }
+  .md-h2 { font-size: 18px; font-weight: 600; }
+  .md-h3 { font-size: 16px; font-weight: 600; color: rgba(166, 64, 41, 0.8); }
+  .md-h4 { font-size: 15px; font-weight: 500; }
 
   .md-p {
     margin: 6px 0;
     text-align: justify;
+    line-height: 1.8;
   }
 
   .md-ul, .md-ol {

@@ -16,12 +16,21 @@ import com.feiyi.module.exhibition.dao.ExhibitDao;
 import com.feiyi.module.exhibition.domain.ExhibitEntity;
 import com.feiyi.module.heritage.dao.HeritageDao;
 import com.feiyi.module.heritage.domain.HeritageEntity;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 /**
@@ -37,15 +46,38 @@ public class AiService {
     private final ExhibitDao exhibitDao;
     private final AiConfig aiConfig;
 
+    @Qualifier("aiStreamExecutor")
+    private final Executor aiStreamExecutor;
+
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(10))
+            .build();
+
+    /**
+     * RAG检索结果封装
+     */
+    @Data
+    public static class RagResult {
+        private List<String> sources;
+        private List<ExhibitLink> exhibits;
+    }
+
     private static final String SYSTEM_PROMPT = """
             你是"非遗智识"——非遗3D数字化交互平台的AI智能知识助手。
-            你是一个基于人工智能技术和RAG知识库检索构建的非遗文化问答助手。
             你专注于中国非物质文化遗产领域，能够回答关于非遗项目、传统技艺、文化传承等方面的问题。
+
+            【重要】你必须始终使用简体中文（中国大陆规范汉字）回复所有内容，禁止使用繁体中文、港澳台用词或任何非规范汉字。
 
             请根据以下知识库中检索到的相关资料来回答用户的问题。
             如果知识库中有相关信息，请优先基于知识库内容回答并适当扩展。
             如果知识库中没有直接相关的信息，请基于你的通用知识回答，但保持回答与非遗文化相关。
             当用户询问你是谁时，请说明你是"非遗智识"AI助手，基于人工智能大模型与RAG知识库检索技术，接入了平台的非遗知识库与项目数据。
+
+            ## 禁止事项
+
+            - 不要在回复末尾添加任何展品推荐提示语（如"💡 平台展厅中有..."等）
+            - 不要在回复中生成任何展品链接或展厅链接（如"[点击查看...](#)"等）
+            - 展品推荐链接会由系统自动判断并展示，你只需专注于回答问题本身
 
             ## 回答格式要求
 
@@ -131,6 +163,155 @@ public class AiService {
     }
 
     /**
+     * AI对话 - SSE流式输出
+     */
+    public SseEmitter chatStream(ChatRequest request) {
+        SseEmitter emitter = new SseEmitter(120_000L); // 2分钟超时
+
+        aiStreamExecutor.execute(() -> {
+            try {
+                // 参数校验
+                if (request.getMessage() == null || request.getMessage().isBlank()) {
+                    emitter.send(SseEmitter.event().name("error").data("{\"message\":\"请输入您的问题\"}"));
+                    emitter.complete();
+                    return;
+                }
+
+                if (aiConfig.getApiKey() == null || aiConfig.getApiKey().isBlank()) {
+                    emitter.send(SseEmitter.event().name("error").data("{\"message\":\"AI服务未配置\"}"));
+                    emitter.complete();
+                    return;
+                }
+
+                // RAG检索（同步，快速）
+                String context = "";
+                List<String> sources = new ArrayList<>();
+                List<ExhibitLink> exhibitLinks = new ArrayList<>();
+
+                boolean useRag = aiConfig.getRagUrl() != null && !aiConfig.getRagUrl().isBlank();
+
+                if (useRag) {
+                    log.info("SSE RAG 语义检索: {}", request.getMessage());
+                    JSONArray ragResults = callRagSearch(request.getMessage());
+                    if (ragResults != null && !ragResults.isEmpty()) {
+                        context = buildContextFromRag(ragResults);
+                        sources = buildSourcesFromRag(ragResults);
+                        exhibitLinks = buildExhibitLinksFromRag(ragResults);
+                    } else {
+                        useRag = false;
+                    }
+                }
+                if (!useRag) {
+                    log.info("SSE MySQL LIKE 检索");
+                    String topic = extractTopic(request.getMessage());
+                    List<KnowledgeEntity> knowledgeList = searchKnowledge(topic);
+                    List<HeritageEntity> heritageList = searchHeritage(topic);
+                    List<ExhibitEntity> exhibitList = searchExhibits(topic);
+                    if (exhibitList.isEmpty() && !heritageList.isEmpty()) {
+                        List<Long> heritageIds = heritageList.stream()
+                                .map(HeritageEntity::getId).collect(Collectors.toList());
+                        exhibitList = searchExhibitsByHeritageIds(heritageIds);
+                    }
+                    context = buildContext(knowledgeList, heritageList, exhibitList);
+                    sources = buildSources(knowledgeList, heritageList);
+                    exhibitLinks = buildExhibitLinks(exhibitList);
+                }
+
+                // 发送 metadata 事件（sources + exhibits）
+                RagResult metadata = new RagResult();
+                metadata.setSources(sources);
+                metadata.setExhibits(exhibitLinks);
+                emitter.send(SseEmitter.event().name("metadata").data(JSONUtil.toJsonStr(metadata)));
+
+                // 构建消息列表
+                JSONArray messages = buildMessages(context, request);
+
+                // 流式调用 LLM
+                streamCallLlm(messages, emitter);
+
+                // 发送 done 事件
+                emitter.send(SseEmitter.event().name("done").data("[STREAM_END]"));
+                emitter.complete();
+
+            } catch (Exception e) {
+                log.error("SSE AI对话失败", e);
+                try {
+                    emitter.send(SseEmitter.event().name("error").data("{\"message\":\"AI服务暂时不可用\"}"));
+                    emitter.completeWithError(e);
+                } catch (Exception ignored) {
+                }
+            }
+        });
+
+        return emitter;
+    }
+
+    /**
+     * 流式调用 LLM API (OpenAI兼容格式)
+     */
+    private void streamCallLlm(JSONArray messages, SseEmitter emitter) {
+        try {
+            JSONObject body = new JSONObject();
+            body.set("model", aiConfig.getModel());
+            body.set("messages", messages);
+            body.set("stream", true);
+            body.set("temperature", 0.7);
+            body.set("max_tokens", 2048);
+
+            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                    .uri(URI.create(aiConfig.getApiUrl()))
+                    .header("Authorization", "Bearer " + aiConfig.getApiKey())
+                    .header("Content-Type", "application/json")
+                    .POST(BodyPublishers.ofString(body.toString()))
+                    .build();
+
+            HttpResponse<java.util.stream.Stream<String>> response = httpClient.send(
+                    request,
+                    HttpResponse.BodyHandlers.ofLines()
+            );
+
+            if (response.statusCode() != 200) {
+                log.error("LLM API返回错误状态: {}", response.statusCode());
+                emitter.send(SseEmitter.event().name("error")
+                        .data("{\"message\":\"LLM服务返回错误\"}"));
+                return;
+            }
+
+            // 解析 SSE 行
+            response.body().forEach(line -> {
+                try {
+                    if (line == null || line.isBlank()) return;
+                    if (line.startsWith("data: ")) {
+                        String data = line.substring(6);
+                        if ("[DONE]".equals(data)) return;
+
+                        JSONObject json = JSONUtil.parseObj(data);
+                        JSONArray choices = json.getJSONArray("choices");
+                        if (choices != null && !choices.isEmpty()) {
+                            JSONObject choice = choices.getJSONObject(0);
+                            JSONObject delta = choice.getJSONObject("delta");
+                            if (delta != null) {
+                                String content = delta.getStr("content");
+                                if (content != null && !content.isEmpty()) {
+                                    JSONObject chunk = new JSONObject();
+                                    chunk.set("text", content);
+                                    emitter.send(SseEmitter.event().name("content").data(chunk.toString()));
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("解析SSE行异常: {}", line, e);
+                }
+            });
+
+        } catch (Exception e) {
+            log.error("流式调用LLM失败", e);
+            throw new RuntimeException("LLM调用失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 调用 Python RAG 语义检索服务
      */
     private JSONArray callRagSearch(String query) {
@@ -183,10 +364,9 @@ public class AiService {
                 }
                 case "exhibit" -> {
                     double dist = item.getDouble("distance", 2.0);
-                    if (dist < 1.0) {
+                    if (dist < 1.5) {
                         String name = meta != null ? meta.getStr("name", "") : "";
                         sbExhibit.append("▸ ").append(name);
-                        sbExhibit.append(" [平台有该展品的3D模型可供浏览]");
                         sbExhibit.append("：").append(document).append("\n\n");
                     }
                 }
@@ -232,9 +412,9 @@ public class AiService {
         for (int i = 0; i < results.size(); i++) {
             JSONObject item = results.getJSONObject(i);
             if (!"exhibit".equals(item.getStr("source_type"))) continue;
-            // 只在语义距离足够近时才认为与展品相关
+            // 语义距离在一定范围内即认为相关，放宽匹配条件
             double distance = item.getDouble("distance", 2.0);
-            if (distance >= 0.9) continue;
+            if (distance >= 1.5) continue;
             JSONObject meta = item.getJSONObject("metadata");
             if (meta == null) continue;
 
@@ -355,7 +535,6 @@ public class AiService {
                 if (e.getCategory() != null) sb.append("（").append(e.getCategory()).append("）");
                 if (e.getEra() != null) sb.append("，年代：").append(e.getEra());
                 if (e.getOrigin() != null) sb.append("，产地：").append(e.getOrigin());
-                sb.append(" [平台有该展品的3D模型可供浏览]");
                 sb.append("\n");
                 if (e.getDescription() != null) sb.append("  简介：").append(e.getDescription()).append("\n");
                 if (e.getHistory() != null) sb.append("  历史：").append(e.getHistory()).append("\n");
@@ -460,12 +639,15 @@ public class AiService {
     // ============ 知识库管理 ============
 
     /**
-     * 知识库列表
+     * 知识库列表（支持按标题搜索）
      */
-    public ResponseDTO<List<KnowledgeEntity>> listKnowledge() {
+    public ResponseDTO<List<KnowledgeEntity>> listKnowledge(String title) {
         LambdaQueryWrapper<KnowledgeEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(KnowledgeEntity::getDeletedFlag, 0)
-                .orderByDesc(KnowledgeEntity::getCreateTime);
+        wrapper.eq(KnowledgeEntity::getDeletedFlag, 0);
+        if (title != null && !title.isBlank()) {
+            wrapper.like(KnowledgeEntity::getTitle, title);
+        }
+        wrapper.orderByDesc(KnowledgeEntity::getCreateTime);
         return ResponseDTO.succ(knowledgeDao.selectList(wrapper));
     }
 

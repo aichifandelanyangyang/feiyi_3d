@@ -163,13 +163,13 @@
               <el-input v-model="form.material" placeholder="如：陶土、丝绸" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <!-- <el-col :span="12">
             <el-form-item label="关联展厅">
               <el-select v-model="form.exhibitionId" placeholder="请选择" style="width: 100%">
                 <el-option label="非遗文化展厅" :value="1" />
               </el-select>
             </el-form-item>
-          </el-col>
+          </el-col> -->
         </el-row>
         <el-form-item label="展品图片">
           <ImageUpload v-model="form.image" />

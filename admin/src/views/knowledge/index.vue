@@ -56,7 +56,7 @@
 
         <div class="ledger-content">
           <el-table
-            :data="filteredData"
+            :data="tableData"
             v-loading="loading"
             class="study-table"
             :header-cell-style="headerStyle"
@@ -88,7 +88,7 @@
 
           <div class="ledger-footer">
             <div class="footer-info">
-              <span class="info-text">共 {{ filteredData.length }} 条知识</span>
+              <span class="info-text">共 {{ tableData.length }} 条知识</span>
             </div>
           </div>
         </div>
@@ -117,7 +117,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus } from '@element-plus/icons-vue'
 import { getKnowledgeList, addKnowledge, updateKnowledge, deleteKnowledge } from '@/api/knowledge'
@@ -142,16 +142,21 @@ const dialogVisible = ref(false)
 const formRef = ref(null)
 const tableData = ref([])
 const searchKeyword = ref('')
-const activeKeyword = ref('')
 
-const filteredData = computed(() => {
-  if (!activeKeyword.value) return tableData.value
-  const kw = activeKeyword.value.toLowerCase()
-  return tableData.value.filter(item => (item.title || '').toLowerCase().includes(kw))
-})
+const loadData = async () => {
+  loading.value = true
+  try {
+    const res = await getKnowledgeList(searchKeyword.value)
+    tableData.value = res.data || []
+  } catch (e) {
+    tableData.value = []
+  } finally {
+    loading.value = false
+  }
+}
 
-const applySearch = () => { activeKeyword.value = searchKeyword.value }
-const resetSearch = () => { searchKeyword.value = ''; activeKeyword.value = '' }
+const applySearch = () => { loadData() }
+const resetSearch = () => { searchKeyword.value = ''; loadData() }
 
 const defaultForm = { id: null, title: '', content: '', category: '' }
 const form = reactive({ ...defaultForm })
@@ -159,18 +164,6 @@ const form = reactive({ ...defaultForm })
 const rules = {
   title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
   content: [{ required: true, message: '请输入内容', trigger: 'blur' }]
-}
-
-const loadData = async () => {
-  loading.value = true
-  try {
-    const res = await getKnowledgeList()
-    tableData.value = res.data || []
-  } catch (e) {
-    tableData.value = []
-  } finally {
-    loading.value = false
-  }
 }
 
 const resetForm = () => {

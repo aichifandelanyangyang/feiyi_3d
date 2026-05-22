@@ -1,7 +1,11 @@
 import request from '@/utils/request'
 
-export function getKnowledgeList() {
-  return request({ url: '/admin/knowledge/list', method: 'get' })
+export function getKnowledgeList(title) {
+  return request({
+    url: '/admin/knowledge/list',
+    method: 'get',
+    params: title ? { title } : {}
+  })
 }
 
 export function addKnowledge(data) {

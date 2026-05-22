@@ -7,7 +7,9 @@ import com.feiyi.module.ai.domain.KnowledgeEntity;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 
@@ -29,12 +31,19 @@ public class AiController {
         return aiService.chat(request);
     }
 
+    @Operation(summary = "AI对话 - SSE流式")
+    @PostMapping(value = "/ai/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter chatStream(@RequestBody ChatRequest request) {
+        return aiService.chatStream(request);
+    }
+
     // ============ 管理接口 ============
 
     @Operation(summary = "知识库列表")
     @GetMapping("/admin/knowledge/list")
-    public ResponseDTO<List<KnowledgeEntity>> listKnowledge() {
-        return aiService.listKnowledge();
+    public ResponseDTO<List<KnowledgeEntity>> listKnowledge(
+            @RequestParam(required = false) String title) {
+        return aiService.listKnowledge(title);
     }
 
     @Operation(summary = "添加知识")

@@ -2,7 +2,11 @@ package com.feiyi.module.ai;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+import java.util.concurrent.Executor;
 
 /**
  * AI配置
@@ -32,4 +36,18 @@ public class AiConfig {
      * 为空则回退到 MySQL LIKE 检索
      */
     private String ragUrl = "";
+
+    /**
+     * SSE流式响应线程池
+     */
+    @Bean("aiStreamExecutor")
+    public Executor aiStreamExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(8);
+        executor.setQueueCapacity(100);
+        executor.setThreadNamePrefix("ai-stream-");
+        executor.initialize();
+        return executor;
+    }
 }

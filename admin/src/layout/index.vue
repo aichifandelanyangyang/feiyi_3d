@@ -3,9 +3,7 @@
     <!-- 书斋侧边栏 -->
     <aside class="study-sidebar" :class="{ collapsed: isCollapsed }">
       <div class="sidebar-header">
-        <div class="header-seal">
-          <span class="seal-inner">文</span>
-        </div>
+        <img class="header-logo" src="/imgs/logo1.jpg" alt="文房" />
         <h1 v-if="!isCollapsed" class="header-title">文房</h1>
       </div>
 
@@ -176,7 +174,7 @@ onMounted(() => {
     .sidebar-header {
       padding: 16px 0;
 
-      .header-seal {
+      .header-logo {
         margin: 0 auto;
       }
     }
@@ -188,20 +186,12 @@ onMounted(() => {
     align-items: center;
     gap: 12px;
 
-    .header-seal {
+    .header-logo {
       width: 36px;
       height: 36px;
-      border: 1px solid rgba(201, 168, 76, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      border-radius: 4px;
+      object-fit: cover;
       flex-shrink: 0;
-
-      .seal-inner {
-        font-family: var(--font-serif);
-        font-size: 18px;
-        color: rgba(201, 168, 76, 0.8);
-      }
     }
 
     .header-title {

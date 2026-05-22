@@ -9,22 +9,23 @@ import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockCont
  * 负责3D展厅的初始化、渲染、交互控制
  */
 export class ExhibitionScene {
+  // 构造函数
   constructor(options) {
     // 容器元素
-    this.container = options.container
-    this.minimapCanvas = options.minimapCanvas
-    // 回调函数
-    this.onProgress = options.onProgress || (() => {})
-    this.onComplete = options.onComplete || (() => {})
+    this.container = options.container   //3D常见的容器
+    this.minimapCanvas = options.minimapCanvas    // 小地图容器
+    // 回调函数，如果调用者没有传入该参数，则默认赋值为一个空函数 (() => {})，防止后续调用时报错
+    this.onProgress = options.onProgress || (() => {})   //进度百分比
+    this.onComplete = options.onComplete || (() => {})   //场景加载完成
     this.onObjectClick = options.onObjectClick || (() => {})  // 物体点击回调
     
     // Three.js核心对象
-    this.scene = null
-    this.camera = null
-    this.renderer = null
-    this.controls = null
-    this.orbitControls = null
-    this.pointerLockControls = null
+    this.scene = null  // 3D 场景容器。所有的物体（模型、灯光、相机等都需要添加到这个场景中才能被渲染出来。
+    this.camera = null   // 虚拟摄像机，决定了用户看到的画面视角、视野范围（FOV）以及近/远裁剪面。
+    this.renderer = null   // 虚拟摄像机，决定了用户看到的画面视角、视野范围（FOV）以及近/远裁剪面。
+    this.controls = null   // 当前激活的控制器的通用引用。 
+    this.orbitControls = null   //  轨道控制器。允许用户通过鼠标拖拽来旋转、缩放和平移相机，通常用于“自由视角”模式。
+    this.pointerLockControls = null  // 指针锁定控制器。允许用户通过移动鼠标来控制相机视角（类似 FPS 游戏），并且鼠标光标会隐藏。通常用于“第一人称漫游”模式。
     
     // 展厅模型
     this.hallModel = null
@@ -170,7 +171,8 @@ export class ExhibitionScene {
   createScene() {
     this.scene = new THREE.Scene()
     this.scene.background = new THREE.Color(0x1a1a2e)
-    this.scene.fog = new THREE.Fog(0x1a1a2e, 50, 200)//线性雾效，距离相机越远越模糊
+    // 扩大雾效范围，避免自由视角缩小时远处物体消失
+    this.scene.fog = new THREE.Fog(0x1a1a2e, 100, 500)
   }
 
   /**
@@ -178,9 +180,10 @@ export class ExhibitionScene {
    */
   createCamera() {
     const aspect = this.container.clientWidth / this.container.clientHeight
-    this.camera = new THREE.PerspectiveCamera(60, aspect, 0.1, 1000)//视角  宽高比  近裁面 远裁面
-    this.camera.position.copy(this.initialCameraPosition)//复制向量设置相机位置
-    this.camera.lookAt(this.initialCameraTarget)//	相机朝向目标点
+    // 扩大远裁剪面到500，配合雾效范围
+    this.camera = new THREE.PerspectiveCamera(60, aspect, 0.1, 500)
+    this.camera.position.copy(this.initialCameraPosition)
+    this.camera.lookAt(this.initialCameraTarget)
   }
 
   /**
@@ -575,7 +578,8 @@ export class ExhibitionScene {
     this.orbitControls.enableDamping = true
     this.orbitControls.dampingFactor = 0.05
     this.orbitControls.minDistance = 1
-    this.orbitControls.maxDistance = 100
+    // 增大最大距离，允许用户从更远处观察展厅
+    this.orbitControls.maxDistance = 300
     this.orbitControls.maxPolarAngle = Math.PI * 0.85
     this.orbitControls.enabled = false
 
@@ -588,7 +592,7 @@ export class ExhibitionScene {
     const _PI_2 = Math.PI / 2
     const minPolar = Math.PI * 0.15  // 最多仰视约27°
     const maxPolar = Math.PI * 0.85  // 最多俯视约27°
-    const pointerSpeed = 0.5         // 降低鼠标灵敏度
+    const pointerSpeed = 0.15        // 降低鼠标灵敏度（原0.5太高）
     const camera = this.camera
 
     // 平滑插值：用目标欧拉角 + 每帧 lerp 逼近，避免一跳一跳
@@ -596,7 +600,7 @@ export class ExhibitionScene {
     this._currentEuler = new THREE.Euler(0, 0, 0, 'YXZ')
     this._targetEuler.setFromQuaternion(camera.quaternion)
     this._currentEuler.copy(this._targetEuler)
-    this._rotationSmoothing = 0.15  // 插值系数，越小越平滑（0.1~0.3）
+    this._rotationSmoothing = 0.1  // 插值系数，越小越平滑（0.1~0.3）
 
     // 移除原有的mousemove监听，替换为受限版本
     document.removeEventListener('mousemove', this.pointerLockControls._onMouseMove)
@@ -604,9 +608,9 @@ export class ExhibitionScene {
       if (!this.pointerLockControls.isLocked) return
       const movementX = event.movementX || 0
       const movementY = event.movementY || 0
-      // 累加到目标角度
-      this._targetEuler.y -= movementX * 0.002 * pointerSpeed
-      this._targetEuler.x -= movementY * 0.002 * pointerSpeed
+      // 累加到目标角度（降低基础乘数使控制更精细）
+      this._targetEuler.y -= movementX * 0.001 * pointerSpeed
+      this._targetEuler.x -= movementY * 0.001 * pointerSpeed
       // 限制垂直角度
       this._targetEuler.x = Math.max(_PI_2 - maxPolar, Math.min(_PI_2 - minPolar, this._targetEuler.x))
     }
@@ -1661,21 +1665,25 @@ export class ExhibitionScene {
   setupVideoScreen() {
     if (!this.hallModel) return
     
-    // 视频屏幕配置：模型名称关键字 -> 视频路径
+    // 视频屏幕配置：模型名称关键字 -> 视频路径 -> 是否水平翻转
+    // 瓷器视频屏幕朝向需要翻转，皮影戏不需要
     const videoConfigs = [
-      { screenName: '视频屏幕皮影', videoSrc: '/videos/皮影戏.mp4' },
-      { screenName: '视频屏幕瓷器', videoSrc: '/videos/瓷器.mp4' }
+      { screenName: '视频屏幕皮影', videoSrc: '/videos/皮影戏.mp4', flipX: false },
+      { screenName: '视频屏幕瓷器', videoSrc: '/videos/瓷器.mp4', flipX: true }
     ]
     
     videoConfigs.forEach((config) => {
-      this.createVideoOnScreen(config.screenName, config.videoSrc)
+      this.createVideoOnScreen(config.screenName, config.videoSrc, config.flipX)
     })
   }
 
   /**
    * 在指定模型上创建视频播放
+   * @param {string} screenName 屏幕模型名称
+   * @param {string} videoSrc 视频路径
+   * @param {boolean} flipX 是否水平翻转纹理（默认true）
    */
-  createVideoOnScreen(screenName, videoSrc) {
+  createVideoOnScreen(screenName, videoSrc, flipX = true) {
     let screenMesh = null
     
     // 查找视频屏幕模型
@@ -1712,9 +1720,9 @@ export class ExhibitionScene {
     videoTexture.format = THREE.RGBAFormat
     videoTexture.colorSpace = THREE.SRGBColorSpace
     videoTexture.flipY = true
-    // 水平翻转纹理修正镜像问题
+    // 水平翻转纹理修正镜像问题（根据屏幕朝向决定是否翻转）
     videoTexture.wrapS = THREE.RepeatWrapping
-    videoTexture.repeat.x = -1
+    videoTexture.repeat.x = flipX ? -1 : 1
     
     // 获取屏幕的边界盒来创建匹配的平面
     const box = new THREE.Box3().setFromObject(screenMesh)

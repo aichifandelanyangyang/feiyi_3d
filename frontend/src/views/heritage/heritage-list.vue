@@ -4,7 +4,7 @@
     <!-- 头部导航 start -->
     <header class="page-header">
       <div class="logo" @click="goHome">
-        <img src="@/assets/images/logo.svg" alt="logo" class="logo-img" />
+        <img src="../../../public/imgs/logo1.jpg" alt="logo" class="logo-img" />
         <span class="logo-text">非遗3D数字化交互平台</span>
       </div>
       <nav class="nav-menu">
@@ -210,10 +210,9 @@ const handleSearch = () => {
   fetchList()
 }
 
-// 分类变更方法
+// 分类变更方法（不立即查询，等点击鉴选按钮）
 const handleCategoryChange = () => {
   pageNum.value = 1
-  fetchList()
 }
 
 // 分页大小变更

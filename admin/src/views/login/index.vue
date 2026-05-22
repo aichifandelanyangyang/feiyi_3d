@@ -71,11 +71,7 @@
         </div>
       </div>
 
-      <!-- 门贴士 -->
-      <div class="gate-note">
-        <span class="note-icon">※</span>
-        <span class="note-text">试阁：admin / 123456</span>
-      </div>
+      
     </div>
   </div>
 </template>

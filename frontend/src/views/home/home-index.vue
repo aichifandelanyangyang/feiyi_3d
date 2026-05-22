@@ -4,7 +4,7 @@
     <!-- 头部导航 start -->
     <header class="home-header" :class="{ 'header-scrolled': isScrolled }">
       <div class="logo" @click="router.push('/')">
-        <img src="@/assets/images/logo.svg" alt="logo" class="logo-img" />
+        <img src="../../../public/imgs/logo1.jpg" alt="logo" class="logo-img" />
         <span class="logo-text">非遗3D数字化交互平台</span>
       </div>
       <nav class="nav-menu">
@@ -26,7 +26,6 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-                <el-dropdown-item command="avatar">修改头像</el-dropdown-item>
                 <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -163,7 +162,7 @@
     <footer class="home-footer">
       <div class="footer-inner">
         <div class="footer-brand">
-          <img src="@/assets/images/logo.svg" alt="logo" class="footer-logo" />
+          <img src="../../../public/imgs/logo1.jpg" alt="logo" class="footer-logo" />
           <span class="footer-name">非遗3D数字化交互平台</span>
         </div>
         <div class="footer-divider"></div>
@@ -199,10 +198,7 @@ const handleUserCommand = (command) => {
   if (command === 'logout') {
     userStore.logout()
     ElMessage.success('已退出登录')
-  } else if (command === 'avatar') {
-    previewAvatar.value = ''
-    avatarDialogVisible.value = true
-  } else if (command === 'profile') {
+  }else if (command === 'profile') {
     router.push('/profile')
   }
 }
