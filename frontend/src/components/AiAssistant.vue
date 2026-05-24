@@ -122,25 +122,25 @@ const formatMessage = (text) => {
     if ((match = h4Re.exec(line))) {
       if (inList) { html += '</ul>'; inList = false }
       if (inOl) { html += '</ol>'; inOl = false }
-      html += `<h6 class="md-h4">${formatInline(match[1])}</h6>`
+      html += `<h4 class="md-h4">${formatInline(match[1])}</h4>`
       continue
     }
     if ((match = h3Re.exec(line))) {
       if (inList) { html += '</ul>'; inList = false }
       if (inOl) { html += '</ol>'; inOl = false }
-      html += `<h5 class="md-h3">${formatInline(match[1])}</h5>`
+      html += `<h3 class="md-h3">${formatInline(match[1])}</h3>`
       continue
     }
     if ((match = h2Re.exec(line))) {
       if (inList) { html += '</ul>'; inList = false }
       if (inOl) { html += '</ol>'; inOl = false }
-      html += `<h4 class="md-h2">${formatInline(match[1])}</h4>`
+      html += `<h2 class="md-h2">${formatInline(match[1])}</h2>`
       continue
     }
     if ((match = h1Re.exec(line))) {
       if (inList) { html += '</ul>'; inList = false }
       if (inOl) { html += '</ol>'; inOl = false }
-      html += `<h3 class="md-h1">${formatInline(match[1])}</h3>`
+      html += `<h1 class="md-h1">${formatInline(match[1])}</h1>`
       continue
     }
 
@@ -396,16 +396,25 @@ const sendMessage = async () => {
   letter-spacing: 0.5px;
 
   /* Markdown 样式 */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Noto Serif SC', 'Source Han Serif CN', serif;
+    margin: 0;
+    padding: 0;
+    font-weight: inherit;
+    line-height: 1.5;
+  }
+
   .md-h1, .md-h2, .md-h3, .md-h4 {
     font-family: 'Noto Serif SC', 'Source Han Serif CN', serif;
     color: #3d3429;
-    margin: 8px 0 6px;
+    margin: 10px 0 8px 0;
     letter-spacing: 1px;
+    clear: both;
   }
-  .md-h1 { font-size: 15px; font-weight: 700; border-bottom: 1px solid rgba(201, 168, 76, 0.2); padding-bottom: 4px; }
-  .md-h2 { font-size: 14px; font-weight: 600; }
-  .md-h3 { font-size: 13.5px; font-weight: 600; color: rgba(166, 64, 41, 0.8); }
-  .md-h4 { font-size: 13px; font-weight: 500; }
+  .md-h1 { font-size: 17px; font-weight: 700; border-bottom: 1px solid rgba(201, 168, 76, 0.25); padding-bottom: 5px; margin-top: 12px; }
+  .md-h2 { font-size: 16px; font-weight: 700; margin-top: 10px; }
+  .md-h3 { font-size: 14.5px; font-weight: 600; color: rgba(166, 64, 41, 0.85); margin-top: 8px; }
+  .md-h4 { font-size: 14px; font-weight: 600; margin-top: 6px; }
 
   .md-p {
     margin: 4px 0;

@@ -75,5 +75,8 @@ minio:
 # AI知识助手配置 (OpenAI兼容格式，支持DeepSeek/智谱/通义千问等)
 ai:
   api-url: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
-  api-key: sk-20d5e9cea1e540c1983d99a7a05b3f41
-  model: qwen-turbo
+  api-key: sk-f740b10daac147f180b39ec34372ce90
+  model: qwen3-max
+
+
+

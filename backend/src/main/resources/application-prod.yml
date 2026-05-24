@@ -55,7 +55,7 @@ minio:
 # AI 知识助手配置
 ai:
   api-url: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
-  api-key: sk-20d5e9cea1e540c1983d99a7a05b3f41
-  model: qwen-turbo
+  api-key: sk-f740b10daac147f180b39ec34372ce90
+  model: qwen3-max
   # Docker 内部 RAG 服务名为 rag
   rag-url: http://rag:8100
